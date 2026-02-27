@@ -62,169 +62,40 @@ watch(() => props.markdown, () => {
 </template>
 
 <style scoped>
-/* Nike-inspired preview styling */
+/* Use github-markdown-css and highlight.js for preview styling */
+/* This isolates preview from the Nike-themed UI */
 .markdown-body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
+  background-color: white;
+  padding: 20px;
   overflow-x: visible;
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
-  font-family: var(--font-family);
-  font-size: var(--font-size-m);
-  line-height: 1.7;
-  max-width: 900px;
-  margin: 0 auto;
 }
 
-/* Typography - Clean Nike style */
-.markdown-body :deep(h1),
-.markdown-body :deep(h2),
-.markdown-body :deep(h3),
-.markdown-body :deep(h4),
-.markdown-body :deep(h5),
-.markdown-body :deep(h6) {
-  font-weight: 600;
-  letter-spacing: -0.5px;
-  margin-top: var(--spacing-xl);
-  margin-bottom: var(--spacing-m);
-  color: var(--color-primary);
-}
-
-.markdown-body :deep(h1) {
-  font-size: var(--font-size-2xl);
-  text-transform: uppercase;
-  border-bottom: 2px solid var(--color-primary);
-  padding-bottom: var(--spacing-m);
-}
-
-.markdown-body :deep(h2) {
-  font-size: var(--font-size-xl);
-}
-
-.markdown-body :deep(h3) {
-  font-size: var(--font-size-l);
-}
-
-.markdown-body :deep(p) {
-  margin-bottom: var(--spacing-m);
-  line-height: 1.7;
-}
-
-.markdown-body :deep(a) {
-  color: var(--color-primary);
-  text-decoration: none;
-  border-bottom: 1px solid var(--color-primary);
-  transition: var(--transition);
-}
-
-.markdown-body :deep(a:hover) {
-  color: var(--color-hover);
-  border-bottom-color: var(--color-hover);
-}
-
-.markdown-body :deep(strong) {
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.markdown-body :deep(em) {
-  font-style: italic;
-  color: var(--color-text-secondary);
-}
-
-.markdown-body :deep(blockquote) {
-  border-left: 3px solid var(--color-primary);
-  padding-left: var(--spacing-l);
-  margin: var(--spacing-l) 0;
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-
-.markdown-body :deep(code) {
-  background-color: var(--color-surface);
-  color: var(--color-primary);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: var(--font-size-s);
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  white-space: pre-wrap !important;
-  word-wrap: break-word !important;
-  word-break: break-word !important;
-}
-
-.markdown-body :deep(pre) {
-  background-color: var(--color-surface);
-  padding: var(--spacing-l);
-  border-radius: 8px;
-  overflow-x: visible !important;
-  white-space: pre-wrap !important;
-  word-wrap: break-word !important;
-  word-break: break-word !important;
-  margin: var(--spacing-l) 0;
-}
-
-.markdown-body :deep(pre code) {
-  background-color: transparent;
-  padding: 0;
-  font-size: var(--font-size-s);
-  white-space: pre-wrap !important;
-}
-
-.markdown-body :deep(ul),
-.markdown-body :deep(ol) {
-  margin: var(--spacing-m) 0;
-  padding-left: var(--spacing-xl);
-}
-
-.markdown-body :deep(li) {
-  margin-bottom: var(--spacing-xs);
-}
-
+/* Ensure proper wrapping for tables, pre, and code */
 .markdown-body :deep(table) {
   display: block;
   width: 100% !important;
   overflow-x: visible !important;
   word-wrap: break-word;
-  border-collapse: collapse;
-  margin: var(--spacing-l) 0;
 }
 
-.markdown-body :deep(th),
-.markdown-body :deep(td) {
-  border: 1px solid var(--color-border);
-  padding: var(--spacing-s) var(--spacing-m);
-  text-align: left;
+.markdown-body :deep(pre) {
+  overflow-x: visible !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
 }
 
-.markdown-body :deep(th) {
-  background-color: var(--color-primary);
-  color: var(--color-background);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: var(--font-size-s);
-  letter-spacing: 0.5px;
+.markdown-body :deep(code) {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
 }
 
-.markdown-body :deep(td) {
-  background-color: var(--color-background);
-}
-
-.markdown-body :deep(tr:nth-child(even) td) {
-  background-color: var(--color-surface);
-}
-
-.markdown-body :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin: var(--spacing-l) 0;
-}
-
-.markdown-body :deep(hr) {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: var(--spacing-2xl) 0;
+.markdown-body :deep(pre code) {
+  white-space: pre-wrap !important;
 }
 
 @media print {
