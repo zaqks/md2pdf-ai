@@ -201,32 +201,35 @@ onBeforeUnmount(() => {
 
 <template>
   <div id="app">
-    <header>
-      <p class="project">md2pdf</p>
-      <div class="menu">
-        <button class="button outline" @click="insertTableOfContents">
-          <ListPlus :size="18" />
-          <span>Contents</span>
+    <aside class="sidebar">
+      <div class="logo">
+        <span class="logo-text">md2pdf</span>
+      </div>
+      
+      <nav class="menu">
+        <button class="button outline" @click="insertTableOfContents" title="Add Table of Contents">
+          <ListPlus :size="20" />
+          <span class="button-text">Contents</span>
         </button>
-        <button class="button outline" @click="insertTable">
-          <Table2 :size="18" />
-          <span>Table</span>
+        <button class="button outline" @click="insertTable" title="Add Table">
+          <Table2 :size="20" />
+          <span class="button-text">Table</span>
         </button>
-        <button class="button outline" @click="insertImage">
-          <ImagePlus :size="18" />
-          <span>Image</span>
+        <button class="button outline" @click="insertImage" title="Add Image">
+          <ImagePlus :size="20" />
+          <span class="button-text">Image</span>
         </button>
-        <button class="button outline" @click="$refs.fileInput.click()">
-          <FileUp :size="18" />
-          <span>Import</span>
+        <button class="button outline" @click="$refs.fileInput.click()" title="Import File">
+          <FileUp :size="20" />
+          <span class="button-text">Import</span>
         </button>
         <input ref="fileInput" type="file" accept=".md,.markdown,.txt" @change="uploadFile" style="display: none">
-        <button class="button filled" @click="transformToPDF">
-          <FileDown :size="18" />
-          <span>Export</span>
+        <button class="button filled" @click="transformToPDF" title="Export to PDF">
+          <FileDown :size="20" />
+          <span class="button-text">Export</span>
         </button>
-      </div>
-    </header>
+      </nav>
+    </aside>
 
     <div class="main-container" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
       <div ref="editorContainerRef" class="editor-container">
@@ -247,40 +250,64 @@ onBeforeUnmount(() => {
 #app {
   height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   background-color: var(--color-background);
 }
 
-header {
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
   background-color: var(--color-background);
-  color: var(--color-text-primary);
-  padding: var(--spacing-l) var(--spacing-2xl);
+  border-right: 1px solid var(--color-border);
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-l) 0;
+  width: 70px;
+  transition: width 0.3s ease;
+  z-index: 100;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-.project {
+.sidebar:hover {
+  width: 200px;
+}
+
+.logo {
+  padding: 0 var(--spacing-l);
+  margin-bottom: var(--spacing-2xl);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .logo {
+  opacity: 1;
+}
+
+.logo-text {
   font-size: var(--font-size-xl);
   font-weight: 600;
   letter-spacing: -0.5px;
-  margin: 0;
   text-transform: uppercase;
+  color: var(--color-text-primary);
 }
 
 .menu {
   display: flex;
+  flex-direction: column;
   gap: var(--spacing-s);
-  align-items: center;
+  padding: 0 var(--spacing-s);
 }
 
 .button {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-s) var(--spacing-l);
-  border-radius: var(--border-radius);
+  padding: var(--spacing-s);
+  border-radius: var(--spacing-s);
   cursor: pointer;
   font-size: var(--font-size-s);
   font-weight: 500;
@@ -288,6 +315,30 @@ header {
   font-family: var(--font-family);
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  width: 100%;
+  white-space: nowrap;
+  justify-content: center;
+}
+
+.sidebar:hover .button {
+  justify-content: flex-start;
+  gap: var(--spacing-m);
+}
+
+.button svg {
+  flex-shrink: 0;
+}
+
+.button-text {
+  opacity: 0;
+  width: 0;
+  transition: opacity 0.3s ease, width 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar:hover .button-text {
+  opacity: 1;
+  width: auto;
 }
 
 .button:active {
@@ -325,6 +376,8 @@ header {
   display: flex;
   overflow: hidden;
   background-color: var(--color-surface);
+  margin-left: 70px;
+  transition: margin-left 0.3s ease;
 }
 
 .editor-container {
@@ -376,10 +429,14 @@ header {
 }
 
 @media print {
-  header,
+  .sidebar,
   .editor-container,
   .drag-bar {
     display: none !important;
+  }
+
+  .main-container {
+    margin-left: 0;
   }
 
   .preview-container {
@@ -393,20 +450,40 @@ header {
 }
 
 @media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    gap: var(--spacing-m);
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
     padding: var(--spacing-m);
   }
 
-  .menu {
-    flex-wrap: wrap;
-    justify-content: center;
+  .sidebar:hover {
+    width: 100%;
   }
 
-  .button {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs) var(--spacing-m);
+  .logo {
+    margin-bottom: var(--spacing-m);
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0;
+  }
+
+  .button-text {
+    opacity: 1;
+  }
+
+  .main-container {
+    margin-left: 0;
+    flex-direction: column;
+  }
+
+  #app {
+    flex-direction: column;
   }
 }
 </style>
