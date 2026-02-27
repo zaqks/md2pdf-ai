@@ -1,21 +1,130 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ListPlus, Table2, ImagePlus, FileUp, FileDown } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Editor/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
+import AppBar from '../components/AppBar.vue';
+import FileBrowser from '../components/FileBrowser.vue';
+import { 
+  initializeNewFile, 
+  getFile, 
+  saveFile, 
+  deleteFile, 
+  renameFile, 
+  getCurrentFileName,
+  setCurrentFileName,
+  getFileList 
+} from '../utils/storage.js';
 
 const markdown = ref('# Hello World !');
 const isDragging = ref(false);
 const editorContainerRef = ref(null);
 const previewContainerRef = ref(null);
 const editorRef = ref(null);
+const currentFileName = ref('');
+const files = ref([]);
+
+// Autosave interval (save every 2 seconds)
+let autosaveInterval = null;
+
+// Autosave interval (save every 2 seconds)
+let autosaveInterval = null;
 
 // Track scrolling state to prevent infinite loops
 let isScrollingEditor = false;
 let isScrollingPreview = false;
 let editorScrollTimeout = null;
 let previewScrollTimeout = null;
+
+// Load or initialize file on mount
+function loadFile() {
+  const savedFileName = getCurrentFileName();
+  let fileName, content;
+
+  if (savedFileName) {
+    const fileData = getFile(savedFileName);
+    if (fileData) {
+      fileName = savedFileName;
+      content = fileData.content;
+    } else {
+      // File was deleted or doesn't exist
+      const newFile = initializeNewFile();
+      fileName = newFile.fileName;
+      content = newFile.content;
+    }
+  } else {
+    // No current file, create new one
+    const newFile = initializeNewFile();
+    fileName = newFile.fileName;
+    content = newFile.content;
+  }
+
+  currentFileName.value = fileName;
+  markdown.value = content;
+  refreshFileList();
+}
+
+// Refresh file list
+function refreshFileList() {
+  files.value = getFileList();
+}
+
+// Autosave function
+function autoSave() {
+  if (currentFileName.value) {
+    saveFile(currentFileName.value, markdown.value);
+    refreshFileList();
+  }
+}
+
+// Watch markdown changes and trigger autosave
+watch(markdown, () => {
+  autoSave();
+});
+
+// Select a file
+function selectFile(fileName) {
+  const fileData = getFile(fileName);
+  if (fileData) {
+    currentFileName.value = fileName;
+    markdown.value = fileData.content;
+    setCurrentFileName(fileName);
+  }
+}
+
+// Create new file
+function createNewFile() {
+  const newFile = initializeNewFile();
+  currentFileName.value = newFile.fileName;
+  markdown.value = newFile.content;
+  refreshFileList();
+}
+
+// Delete file
+function handleDeleteFile(fileName) {
+  deleteFile(fileName);
+  
+  // If we deleted the current file, create a new one
+  if (fileName === currentFileName.value) {
+    createNewFile();
+  } else {
+    refreshFileList();
+  }
+}
+
+// Rename file
+function handleRenameFile(newName) {
+  if (newName !== currentFileName.value) {
+    if (renameFile(currentFileName.value, newName)) {
+      currentFileName.value = newName;
+      setCurrentFileName(newName);
+      refreshFileList();
+    } else {
+      alert('File name already exists or invalid');
+    }
+  }
+}
 
 function insertTableOfContents() {
   const lines = markdown.value.split('\n');
@@ -180,6 +289,8 @@ function stopDrag() {
 
 // Setup preview scroll listener
 onMounted(() => {
+  loadFile();
+  
   if (previewContainerRef.value) {
     previewContainerRef.value.addEventListener('scroll', onPreviewScroll, { passive: true });
   }
@@ -206,6 +317,14 @@ onBeforeUnmount(() => {
         <span class="logo-text">md2pdf</span>
       </div>
       
+      <FileBrowser
+        :files="files"
+        :current-file-name="currentFileName"
+        @select="selectFile"
+        @delete="handleDeleteFile"
+        @create="createNewFile"
+      />
+      
       <nav class="menu">
         <button class="button outline" @click="insertTableOfContents" title="Add Table of Contents">
           <ListPlus :size="20" />
@@ -231,13 +350,17 @@ onBeforeUnmount(() => {
       </nav>
     </aside>
 
-    <div class="main-container" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
-      <div ref="editorContainerRef" class="editor-container">
-        <Editor ref="editorRef" v-model="markdown" @scroll="onEditorScroll" />
-      </div>
-      <div class="drag-bar" :class="{ dragging: isDragging }" @mousedown="startDrag"></div>
-      <div ref="previewContainerRef" class="preview-container">
-        <Preview :markdown="markdown" />
+    <div class="content-area">
+      <AppBar :file-name="currentFileName" @rename="handleRenameFile" />
+      
+      <div class="main-container" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
+        <div ref="editorContainerRef" class="editor-container">
+          <Editor ref="editorRef" v-model="markdown" @scroll="onEditorScroll" />
+        </div>
+        <div class="drag-bar" :class="{ dragging: isDragging }" @mousedown="startDrag"></div>
+        <div ref="previewContainerRef" class="preview-container">
+          <Preview :markdown="markdown" />
+        </div>
       </div>
     </div>
     
@@ -263,7 +386,6 @@ onBeforeUnmount(() => {
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: var(--spacing-l) 0;
   width: 70px;
   transition: width 0.3s ease;
@@ -273,12 +395,12 @@ onBeforeUnmount(() => {
 }
 
 .sidebar:hover {
-  width: 200px;
+  width: 280px;
 }
 
 .logo {
   padding: 0 var(--spacing-l);
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-l);
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -301,6 +423,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: var(--spacing-s);
   padding: 0 var(--spacing-s);
+  margin-top: auto;
+  padding-top: var(--spacing-l);
+  border-top: 1px solid var(--color-border);
 }
 
 .button {
@@ -371,13 +496,19 @@ onBeforeUnmount(() => {
   transform: translateY(-1px);
 }
 
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 70px;
+  transition: margin-left 0.3s ease;
+}
+
 .main-container {
   flex: 1;
   display: flex;
   overflow: hidden;
   background-color: var(--color-surface);
-  margin-left: 70px;
-  transition: margin-left 0.3s ease;
 }
 
 .editor-container {
@@ -431,11 +562,12 @@ onBeforeUnmount(() => {
 @media print {
   .sidebar,
   .editor-container,
-  .drag-bar {
+  .drag-bar,
+  .content-area > *:not(.main-container) {
     display: none !important;
   }
 
-  .main-container {
+  .content-area {
     margin-left: 0;
   }
 
@@ -471,14 +603,18 @@ onBeforeUnmount(() => {
     flex-direction: row;
     flex-wrap: wrap;
     padding: 0;
+    margin-top: var(--spacing-m);
   }
 
   .button-text {
     opacity: 1;
   }
 
-  .main-container {
+  .content-area {
     margin-left: 0;
+  }
+
+  .main-container {
     flex-direction: column;
   }
 
