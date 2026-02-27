@@ -10,6 +10,8 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['scroll']);
+
 const previewHtml = ref('');
 
 // Configure marked with custom renderer for heading IDs
@@ -62,9 +64,6 @@ watch(() => props.markdown, () => {
 <style scoped>
 .markdown-body {
   background-color: white;
-  padding: 20px;
-  min-height: 100%;
-  box-sizing: border-box;
   overflow-x: visible;
   overflow-wrap: break-word;
   word-wrap: break-word;

@@ -13,7 +13,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'scroll']);
 
 const editorElement = ref(null);
 let editor = null;
@@ -31,6 +31,13 @@ onMounted(() => {
   editor.on('change', () => {
     emit('update:modelValue', editor.getValue());
   });
+
+  // Emit scroll events for synchronization
+  editor.on('scroll', () => {
+    const scrollInfo = editor.getScrollInfo();
+    const scrollPercentage = scrollInfo.top / (scrollInfo.height - scrollInfo.clientHeight);
+    emit('scroll', scrollPercentage);
+  });
 });
 
 watch(() => props.modelValue, (newValue) => {
@@ -42,6 +49,17 @@ watch(() => props.modelValue, (newValue) => {
 onBeforeUnmount(() => {
   if (editor) {
     editor.toTextArea();
+  }
+});
+
+// Expose scrollTo method for parent to control scroll
+defineExpose({
+  scrollTo: (percentage) => {
+    if (editor && isFinite(percentage)) {
+      const scrollInfo = editor.getScrollInfo();
+      const editorScrollHeight = scrollInfo.height - scrollInfo.clientHeight;
+      editor.scrollTo(null, percentage * editorScrollHeight);
+    }
   }
 });
 </script>
