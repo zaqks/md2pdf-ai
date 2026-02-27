@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
   <div id="app">
     <aside class="sidebar">
       <div class="logo">
-        <span class="logo-text">md2pdf</span>
+        <span class="logo-text">md2pdf-AI</span>
       </div>
       
       <FileBrowser
