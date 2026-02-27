@@ -688,32 +688,50 @@ onBeforeUnmount(() => {
 }
 
 @media print {
-
+  /* Hide everything except preview content */
   .sidebar,
   .editor-container,
   .drag-bar,
-  .content-area>*:not(.main-container),
+  .mobile-menu-toggle,
+  .mobile-tabs,
   aside,
   nav {
     display: none !important;
   }
 
+  /* Hide AppBar and other content-area children except main-container */
+  .content-area > *:not(.main-container) {
+    display: none !important;
+  }
+
+  /* Hide AI Assistant */
+  #app > *:not(.content-area) {
+    display: none !important;
+  }
+
+  /* Ensure proper layout for print */
+  #app {
+    display: block !important;
+    height: auto !important;
+  }
+
   .content-area {
-    margin-left: 0;
+    margin-left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .main-container {
+    display: block !important;
+    height: auto !important;
   }
 
   .preview-container {
-    overflow: visible;
-    padding: 0;
-  }
-
-  #app {
-    display: block;
-  }
-
-  /* Hide AI Assistant chat */
-  #app>*:not(.content-area) {
-    display: none !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: 100% !important;
   }
 }
 

@@ -132,6 +132,15 @@ watch(() => props.markdown, () => {
 }
 
 @media print {
+  .markdown-body {
+    overflow: visible !important;
+    padding: 20px !important;
+    background-color: white !important;
+    color: black !important;
+    display: block !important;
+    height: auto !important;
+  }
+
   .markdown-body,
   .markdown-body * {
     overflow: visible !important;
