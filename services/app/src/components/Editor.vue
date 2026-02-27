@@ -42,7 +42,19 @@ onMounted(() => {
 
 watch(() => props.modelValue, (newValue) => {
   if (editor && editor.getValue() !== newValue) {
+    const cursor = editor.getCursor();
     editor.setValue(newValue);
+    // Restore cursor position if still valid
+    const lineCount = editor.lineCount();
+    if (cursor.line < lineCount) {
+      editor.setCursor(cursor);
+    }
+    // Force CodeMirror to refresh and recalculate layout
+    setTimeout(() => {
+      if (editor) {
+        editor.refresh();
+      }
+    }, 0);
   }
 });
 
@@ -52,7 +64,7 @@ onBeforeUnmount(() => {
   }
 });
 
-// Expose scrollTo method for parent to control scroll
+// Expose scrollTo and refresh methods for parent to control
 defineExpose({
   scrollTo: (percentage) => {
     if (editor && isFinite(percentage)) {
@@ -60,16 +72,31 @@ defineExpose({
       const editorScrollHeight = scrollInfo.height - scrollInfo.clientHeight;
       editor.scrollTo(null, percentage * editorScrollHeight);
     }
+  },
+  refresh: () => {
+    if (editor) {
+      editor.refresh();
+    }
   }
 });
 </script>
 
 <template>
-  <textarea ref="editorElement"></textarea>
+  <div class="editor-wrapper">
+    <textarea ref="editorElement"></textarea>
+  </div>
 </template>
 
 <style>
 /* Dark editor theme matching design system */
+.editor-wrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .CodeMirror {
   height: 100% !important;
   width: 100%;
@@ -78,21 +105,28 @@ defineExpose({
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   background-color: #1a1a1a !important;
   color: #e0e0e0 !important;
+  box-sizing: border-box;
 }
 
 .CodeMirror-scroll {
   will-change: scroll-position;
   padding: 20px;
+  box-sizing: border-box;
+  min-height: 100%;
 }
 
 .CodeMirror-gutters {
   background-color: #0f0f0f !important;
   border-right: 1px solid #2a2a2a !important;
+  padding: 0 3px 0 0;
+  min-width: 45px;
 }
 
 .CodeMirror-linenumber {
   color: #757575 !important;
-  padding: 0 12px;
+  padding: 0 8px;
+  text-align: right;
+  min-width: 35px;
 }
 
 .CodeMirror-cursor {

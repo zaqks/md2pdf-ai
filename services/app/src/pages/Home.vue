@@ -6,15 +6,15 @@ import Preview from '../components/Editor/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
 import AppBar from '../components/AppBar.vue';
 import FileBrowser from '../components/FileBrowser.vue';
-import { 
-  initializeNewFile, 
-  getFile, 
-  saveFile, 
-  deleteFile, 
-  renameFile, 
+import {
+  initializeNewFile,
+  getFile,
+  saveFile,
+  deleteFile,
+  renameFile,
   getCurrentFileName,
   setCurrentFileName,
-  getFileList 
+  getFileList
 } from '../utils/storage.js';
 import { useAiAssistant } from '../composables/useAiAssistant.js';
 
@@ -27,9 +27,9 @@ const currentFileName = ref('');
 const files = ref([]);
 
 // AI Assistant
-const { 
-  status: aiStatus, 
-  isProcessing: aiProcessing, 
+const {
+  status: aiStatus,
+  isProcessing: aiProcessing,
   error: aiError,
   connect: connectAi,
   disconnect: disconnectAi,
@@ -114,7 +114,7 @@ function createNewFile() {
 // Delete file
 function handleDeleteFile(fileName) {
   deleteFile(fileName);
-  
+
   // If we deleted the current file, create a new one
   if (fileName === currentFileName.value) {
     createNewFile();
@@ -223,6 +223,12 @@ async function handleAiSubmit(query) {
     const response = await askAi(query, markdown.value);
     // Override current content with AI response
     markdown.value = response;
+    // Force editor to refresh layout after content update
+    setTimeout(() => {
+      if (editorRef.value) {
+        editorRef.value.refresh();
+      }
+    }, 100);
   } catch (error) {
     console.error('AI Error:', error);
     alert(`AI Error: ${error.message}`);
@@ -233,8 +239,16 @@ function handleAiUndo() {
   const previousContent = undoAi();
   if (previousContent !== null) {
     markdown.value = previousContent;
+    // Force editor to refresh layout after undo
+    setTimeout(() => {
+      if (editorRef.value) {
+        editorRef.value.refresh();
+      }
+    }, 100);
   }
 }
+
+
 
 // Handle editor scroll - sync to preview
 function onEditorScroll(scrollPercentage) {
@@ -312,7 +326,7 @@ function stopDrag() {
 onMounted(() => {
   loadFile();
   connectAi(); // Connect to AI WebSocket
-  
+
   if (previewContainerRef.value) {
     previewContainerRef.value.addEventListener('scroll', onPreviewScroll, { passive: true });
   }
@@ -320,7 +334,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   disconnectAi(); // Disconnect AI WebSocket
-  
+
   if (previewContainerRef.value) {
     previewContainerRef.value.removeEventListener('scroll', onPreviewScroll);
   }
@@ -340,15 +354,10 @@ onBeforeUnmount(() => {
       <div class="logo">
         <span class="logo-text">md2pdf-AI</span>
       </div>
-      
-      <FileBrowser
-        :files="files"
-        :current-file-name="currentFileName"
-        @select="selectFile"
-        @delete="handleDeleteFile"
-        @create="createNewFile"
-      />
-      
+
+      <FileBrowser :files="files" :current-file-name="currentFileName" @select="selectFile" @delete="handleDeleteFile"
+        @create="createNewFile" />
+
       <nav class="menu">
         <button class="button outline" @click="insertTableOfContents" title="Add Table of Contents">
           <ListPlus :size="20" />
@@ -376,7 +385,7 @@ onBeforeUnmount(() => {
 
     <div class="content-area">
       <AppBar :file-name="currentFileName" @rename="handleRenameFile" />
-      
+
       <div class="main-container" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
         <div ref="editorContainerRef" class="editor-container">
           <Editor ref="editorRef" v-model="markdown" @scroll="onEditorScroll" />
@@ -387,14 +396,9 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
-    
-    <AiAssistant 
-      :status="aiStatus" 
-      :is-processing="aiProcessing"
-      :can-undo="canUndoAi()"
-      @submit="handleAiSubmit"
-      @undo="handleAiUndo"
-    />
+
+    <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()" @submit="handleAiSubmit"
+      @undo="handleAiUndo" />
   </div>
 </template>
 
@@ -556,8 +560,11 @@ onBeforeUnmount(() => {
 .editor-container {
   flex: 1;
   display: flex;
+  flex-direction: column;
   position: relative;
   background-color: var(--color-background);
+  overflow: hidden;
+  min-height: 0;
 }
 
 .drag-bar {
@@ -602,10 +609,11 @@ onBeforeUnmount(() => {
 }
 
 @media print {
+
   .sidebar,
   .editor-container,
   .drag-bar,
-  .content-area > *:not(.main-container),
+  .content-area>*:not(.main-container),
   aside,
   nav {
     display: none !important;
@@ -625,7 +633,7 @@ onBeforeUnmount(() => {
   }
 
   /* Hide AI Assistant chat */
-  #app > *:not(.content-area) {
+  #app>*:not(.content-area) {
     display: none !important;
   }
 }
