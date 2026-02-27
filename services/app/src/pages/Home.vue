@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Nike-inspired clean design */
+/* Clean design system */
 #app {
   height: 100vh;
   display: flex;

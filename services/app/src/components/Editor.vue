@@ -69,7 +69,7 @@ defineExpose({
 </template>
 
 <style>
-/* Dark editor theme matching Nike theme colors */
+/* Dark editor theme matching design system */
 .CodeMirror {
   height: 100% !important;
   width: 100%;

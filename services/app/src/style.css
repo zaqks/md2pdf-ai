@@ -1,6 +1,6 @@
-/* Nike-inspired Design System - Clean & Minimal */
+/* Design System - Clean & Minimal */
 :root {
-    /* Colors - Nike palette */
+    /* Color Palette */
     --color-primary: #111111;
     --color-secondary: #757575;
     --color-background: #FFFFFF;
@@ -19,7 +19,7 @@
     --spacing-xl: 32px;
     --spacing-2xl: 43px;
     
-    /* Typography - Nike uses clean sans-serif, scaled to 90% */
+    /* Typography - Clean sans-serif, scaled to 90% */
     --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-size-xs: 11px;
     --font-size-s: 13px;

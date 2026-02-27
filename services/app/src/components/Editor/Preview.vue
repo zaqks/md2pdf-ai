@@ -63,7 +63,7 @@ watch(() => props.markdown, () => {
 
 <style scoped>
 /* Use github-markdown-css and highlight.js for preview styling */
-/* This isolates preview from the Nike-themed UI */
+/* This isolates preview from the themed UI */
 .markdown-body {
   background-color: white;
   padding: 20px;
