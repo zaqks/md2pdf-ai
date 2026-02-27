@@ -114,12 +114,18 @@ function createNewFile() {
 // Delete file
 function handleDeleteFile(fileName) {
   deleteFile(fileName);
+  refreshFileList();
 
-  // If we deleted the current file, create a new one
+  // If we deleted the current file, switch to another file or create new one
   if (fileName === currentFileName.value) {
-    createNewFile();
-  } else {
-    refreshFileList();
+    // Check if there are any remaining files
+    if (files.value.length > 0) {
+      // Open the most recently modified file
+      selectFile(files.value[0].name);
+    } else {
+      // No files left, create a new one
+      createNewFile();
+    }
   }
 }
 
