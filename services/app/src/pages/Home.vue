@@ -444,8 +444,8 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()" @submit="handleAiSubmit"
-      @undo="handleAiUndo" />
+    <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()" 
+      :hide-on-mobile="isMobileMenuOpen" @submit="handleAiSubmit" @undo="handleAiUndo" />
   </div>
 </template>
 
@@ -825,6 +825,7 @@ onBeforeUnmount(() => {
   .preview-container {
     flex: 1;
     min-height: 0;
+    padding-bottom: 80px; /* Space for AI input */
   }
 
   .editor-container.mobile-hidden,

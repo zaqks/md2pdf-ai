@@ -14,6 +14,10 @@ const props = defineProps({
   canUndo: {
     type: Boolean,
     default: false
+  },
+  hideOnMobile: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -78,23 +82,30 @@ function toggleExpand() {
     }, 100);
   }
 }
+
+function autoResize(event) {
+  const textarea = event.target;
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+}
 </script>
 
 <template>
-  <div class="ai-assistant" :class="{ expanded: isExpanded }">
+  <div class="ai-assistant" :class="{ expanded: isExpanded, 'mobile-hidden': hideOnMobile }">
     <div class="ai-container">
       <div 
         class="status-indicator" 
         :style="{ backgroundColor: statusColor }"
         :title="statusTitle"
       />
-      <input
+      <textarea
         v-model="inputText"
-        type="text"
         class="ai-input"
+        rows="1"
         :placeholder="isProcessing ? 'Processing...' : 'Ask AI assistant...'"
         @keypress="handleKeyPress"
         @focus="isExpanded = true"
+        @input="autoResize"
         :disabled="isProcessing || status !== 'connected'"
       />
       <button 
@@ -159,6 +170,12 @@ function toggleExpand() {
   color: var(--color-text-primary);
   width: 200px;
   transition: width 0.3s ease;
+  resize: none;
+  overflow-y: auto;
+  min-height: 24px;
+  max-height: 120px;
+  padding: 4px 0;
+  line-height: 1.4;
 }
 
 .ai-input:disabled {
@@ -230,6 +247,10 @@ function toggleExpand() {
     bottom: var(--spacing-m);
     right: var(--spacing-m);
     left: var(--spacing-m);
+  }
+
+  .ai-assistant.mobile-hidden {
+    display: none;
   }
 
   .ai-container {
