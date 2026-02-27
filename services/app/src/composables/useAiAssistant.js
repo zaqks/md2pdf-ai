@@ -2,7 +2,11 @@ import { ref } from 'vue';
 import { useWebSocket } from './useWebSocket';
 
 export function useAiAssistant() {
-  const wsUrl = 'ws://localhost:8000/ws/llm';
+  // Get API URL from environment or use default
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  
+  // Convert http:// to ws:// and https:// to wss://
+  const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/llm';
   const isProcessing = ref(false);
   const error = ref(null);
   const previousContent = ref(null);
