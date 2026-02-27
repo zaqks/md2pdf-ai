@@ -380,6 +380,7 @@ onBeforeUnmount(() => {
 
     <aside class="sidebar" :class="{ 'mobile-open': isMobileMenuOpen }">
       <div class="logo">
+        <img src="/logo.svg" alt="md2pdf-AI" class="logo-img" />
         <span class="logo-text">md2pdf-AI</span>
       </div>
 
@@ -479,15 +480,47 @@ onBeforeUnmount(() => {
 }
 
 .logo {
-  padding: 0 var(--spacing-l);
+  padding: 0 var(--spacing-s);
   margin-bottom: var(--spacing-l);
   white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-s);
+  justify-content: center;
+  transition: justify-content 0.3s ease;
 }
 
 .sidebar:hover .logo {
+  justify-content: flex-start;
+  padding-left: var(--spacing-l);
+}
+
+/* Logo image - same size as menu buttons */
+.logo-img {
+  width: 54px;
+  height: 54px;
+  display: block;
+  flex-shrink: 0;
+  padding: var(--spacing-s);
+}
+
+/* Logo text hidden when collapsed, visible on hover/expanded sidebar */
+.logo-text {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+  opacity: 0;
+  transition: opacity 0.3s ease, width 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 0;
+}
+
+.sidebar:hover .logo-text {
   opacity: 1;
+  width: auto;
 }
 
 /* Hide file browser when collapsed */
@@ -790,7 +823,13 @@ onBeforeUnmount(() => {
   .logo {
     opacity: 1;
     margin-bottom: var(--spacing-l);
-    padding: 0;
+    padding: 0 var(--spacing-l);
+    justify-content: flex-start;
+  }
+
+  .logo-text {
+    opacity: 1;
+    width: auto;
   }
 
   .sidebar :deep(.file-browser) {
