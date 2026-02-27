@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { FileText, Table2, Image, Upload, Sparkles, List } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Editor/Preview.vue';
+import AiAssistant from '../components/AiAssistant.vue';
 
 const markdown = ref('# Hello World !');
 const isDragging = ref(false);
@@ -96,6 +97,13 @@ function uploadFile(event) {
 
 function transformToPDF() {
   window.print();
+}
+
+function handleAiSubmit(query) {
+  // TODO: Integrate with AI service
+  console.log('AI Query:', query);
+  // For now, just append the query to markdown as a placeholder
+  markdown.value += `\n\n<!-- AI Query: ${query} -->\n`;
 }
 
 // Handle editor scroll - sync to preview
@@ -229,6 +237,8 @@ onBeforeUnmount(() => {
         <Preview :markdown="markdown" />
       </div>
     </div>
+    
+    <AiAssistant @submit="handleAiSubmit" />
   </div>
 </template>
 
