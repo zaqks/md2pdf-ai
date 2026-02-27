@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { FileText, Table2, Image, Upload, Sparkles, List } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Editor/Preview.vue';
 
@@ -85,7 +86,9 @@ function uploadFile(event) {
   if (file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      markdown.value = e.target.result;
+      // Append content instead of replacing
+      const newContent = e.target.result;
+      markdown.value = markdown.value ? markdown.value + '\n\n' + newContent : newContent;
     };
     reader.readAsText(file);
   }
@@ -193,21 +196,26 @@ onBeforeUnmount(() => {
     <header>
       <p class="project">md2pdf</p>
       <div class="menu">
-        <button class="button" @click="insertTableOfContents">
-          📑 Table of Contents
+        <button class="button outline" @click="insertTableOfContents">
+          <List :size="18" />
+          <span>Contents</span>
         </button>
-        <button class="button" @click="insertTable">
-          📊 Add Table
+        <button class="button outline" @click="insertTable">
+          <Table2 :size="18" />
+          <span>Table</span>
         </button>
-        <button class="button" @click="insertImage">
-          🖼️ Add Image
+        <button class="button outline" @click="insertImage">
+          <Image :size="18" />
+          <span>Image</span>
         </button>
-        <button class="button upload" @click="$refs.fileInput.click()">
-          📄 Upload .md
+        <button class="button outline" @click="$refs.fileInput.click()">
+          <Upload :size="18" />
+          <span>Import</span>
         </button>
         <input ref="fileInput" type="file" accept=".md,.markdown,.txt" @change="uploadFile" style="display: none">
-        <button class="button download" @click="transformToPDF">
-          🎉 Transform
+        <button class="button filled" @click="transformToPDF">
+          <Sparkles :size="18" />
+          <span>Transform</span>
         </button>
       </div>
     </header>
@@ -225,86 +233,139 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Nike-inspired clean design */
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-background);
 }
 
 header {
-  background-color: #2c3e50;
-  color: white;
-  padding: 15px 20px;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  padding: var(--spacing-l) var(--spacing-2xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .project {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.5px;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .menu {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-s);
   align-items: center;
 }
 
 .button {
-  background-color: #3498db;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-s) var(--spacing-l);
+  border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
+  font-size: var(--font-size-s);
+  font-weight: 500;
+  transition: var(--transition);
+  font-family: var(--font-family);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.button:hover {
-  background-color: #2980b9;
+.button:active {
+  transform: translateY(0);
+}
+
+/* Outline buttons (most buttons) */
+.button.outline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.button.outline:hover {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  transform: translateY(-1px);
+}
+
+/* Filled button (Transform only) */
+.button.filled {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  border: 2px solid var(--color-primary);
+}
+
+.button.filled:hover {
+  background-color: var(--color-hover);
+  border-color: var(--color-hover);
+  transform: translateY(-1px);
 }
 
 .main-container {
   flex: 1;
   display: flex;
   overflow: hidden;
+  background-color: var(--color-surface);
 }
 
 .editor-container {
   flex: 1;
   display: flex;
   position: relative;
+  background-color: var(--color-background);
 }
 
 .drag-bar {
-  width: 10px;
-  background-color: #ddd;
+  width: 3px;
+  background-color: var(--color-border);
   cursor: col-resize;
-  transition: background-color 0.2s;
+  transition: var(--transition);
   position: relative;
 }
 
 .drag-bar:hover,
 .drag-bar.dragging {
-  background-color: #3498db;
+  background-color: var(--color-primary);
+  width: 4px;
 }
 
 .preview-container {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 10px;
-  background-color: white;
+  padding: var(--spacing-2xl);
+  background-color: var(--color-background);
   will-change: scroll-position;
+}
 
+/* Smooth scrollbar styling */
+.preview-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.preview-container::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+.preview-container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.preview-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
 }
 
 @media print {
-
   header,
   .editor-container,
   .drag-bar {
@@ -318,6 +379,24 @@ header {
 
   #app {
     display: block;
+  }
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: var(--spacing-m);
+    padding: var(--spacing-m);
+  }
+
+  .menu {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .button {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-m);
   }
 }
 </style>

@@ -1,3 +1,40 @@
+/* Nike-inspired Design System - Clean & Minimal */
+:root {
+    /* Colors - Nike palette */
+    --color-primary: #111111;
+    --color-secondary: #757575;
+    --color-background: #FFFFFF;
+    --color-surface: #F5F5F5;
+    --color-border: #E5E5E5;
+    --color-text-primary: #111111;
+    --color-text-secondary: #757575;
+    --color-accent: #111111;
+    --color-hover: #757575;
+    
+    /* Spacing - scaled to 90% */
+    --spacing-xs: 7px;
+    --spacing-s: 11px;
+    --spacing-m: 14px;
+    --spacing-l: 22px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 43px;
+    
+    /* Typography - Nike uses clean sans-serif, scaled to 90% */
+    --font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-size-xs: 11px;
+    --font-size-s: 13px;
+    --font-size-m: 14px;
+    --font-size-l: 18px;
+    --font-size-xl: 22px;
+    --font-size-2xl: 29px;
+    
+    /* Effects */
+    --border-radius: 30px;
+    --transition: all 0.2s ease;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 * {
     margin: 0;
     border: 0;
@@ -8,7 +45,11 @@
 html,
 body {
     height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-family);
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 #app {

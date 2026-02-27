@@ -19,7 +19,6 @@ md2pdf-ai/
 │   │   │   ├── App.vue
 │   │   │   ├── main.js
 │   │   │   └── style.css
-│   │   ├── md2pdf/          # Original reference implementation
 │   │   └── Dockerfile
 │   └── api/                 # Future API service (optional)
 └── docker-compose.yml
