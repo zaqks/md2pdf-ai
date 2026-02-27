@@ -817,11 +817,18 @@ onBeforeUnmount(() => {
     margin-left: 0;
   }
 
-  .app-bar,
-  .mobile-tabs {
+  .content-area > :deep(.app-bar) {
     position: sticky;
     top: 0;
     z-index: 50;
+    background-color: var(--color-surface);
+  }
+
+  .mobile-tabs {
+    position: sticky;
+    top: 50px; /* Height of app-bar */
+    z-index: 50;
+    background-color: var(--color-surface);
   }
 
   .main-container {
