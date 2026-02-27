@@ -817,6 +817,13 @@ onBeforeUnmount(() => {
     margin-left: 0;
   }
 
+  .app-bar,
+  .mobile-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
   .main-container {
     flex-direction: column;
   }
