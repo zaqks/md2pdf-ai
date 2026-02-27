@@ -29,6 +29,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the app
-
-RUN chmod +x run.sh
 CMD ["python3", "main.py"]     
