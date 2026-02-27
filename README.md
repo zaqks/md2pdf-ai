@@ -2,6 +2,9 @@
 
 A modern Markdown to PDF converter that offers live preview, syntax highlighting, PDF export, local storage for file persistence, and an AI assistant to help edit content.
 
+<img src="docs/banner.png" width=100%>
+
+
 ## Project Structure
 
 ```
