@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { FileText, Table2, Image, Upload, Sparkles, List } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Editor/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
       <p class="project">md2pdf</p>
       <div class="menu">
         <button class="button outline" @click="insertTableOfContents">
-          <List :size="18" />
+          <ListPlus :size="18" />
           <span>Contents</span>
         </button>
         <button class="button outline" @click="insertTable">
@@ -213,16 +213,16 @@ onBeforeUnmount(() => {
           <span>Table</span>
         </button>
         <button class="button outline" @click="insertImage">
-          <Image :size="18" />
+          <ImagePlus :size="18" />
           <span>Image</span>
         </button>
         <button class="button outline" @click="$refs.fileInput.click()">
-          <Upload :size="18" />
+          <FileUp :size="18" />
           <span>Import</span>
         </button>
         <input ref="fileInput" type="file" accept=".md,.markdown,.txt" @change="uploadFile" style="display: none">
         <button class="button filled" @click="transformToPDF">
-          <Sparkles :size="18" />
+          <FileDown :size="18" />
           <span>Export</span>
         </button>
       </div>
