@@ -1,17 +1,65 @@
 <script setup>
-import { ref } from 'vue';
-import { Sparkles } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Sparkles, Undo2 } from 'lucide-vue-next';
+
+const props = defineProps({
+  status: {
+    type: String,
+    default: 'disconnected'
+  },
+  isProcessing: {
+    type: Boolean,
+    default: false
+  },
+  canUndo: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const inputText = ref('');
 const isExpanded = ref(false);
 
-const emit = defineEmits(['submit']);
+const emit = defineEmits(['submit', 'undo']);
+
+const statusColor = computed(() => {
+  switch (props.status) {
+    case 'connected':
+      return '#4caf50'; // green
+    case 'connecting':
+      return '#ff9800'; // orange
+    case 'error':
+    case 'disconnected':
+      return '#f44336'; // red
+    default:
+      return '#757575'; // grey
+  }
+});
+
+const statusTitle = computed(() => {
+  switch (props.status) {
+    case 'connected':
+      return 'Connected';
+    case 'connecting':
+      return 'Connecting...';
+    case 'error':
+      return 'Connection error';
+    case 'disconnected':
+      return 'Disconnected';
+    default:
+      return 'Unknown';
+  }
+});
 
 function handleSubmit() {
-  if (inputText.value.trim()) {
+  if (inputText.value.trim() && !props.isProcessing) {
     emit('submit', inputText.value);
     inputText.value = '';
   }
+}
+
+function handleUndo() {
+  emit('undo');
 }
 
 function handleKeyPress(event) {
@@ -35,16 +83,34 @@ function toggleExpand() {
 <template>
   <div class="ai-assistant" :class="{ expanded: isExpanded }">
     <div class="ai-container">
+      <div 
+        class="status-indicator" 
+        :style="{ backgroundColor: statusColor }"
+        :title="statusTitle"
+      />
       <input
         v-model="inputText"
         type="text"
         class="ai-input"
-        placeholder="Ask AI assistant..."
+        :placeholder="isProcessing ? 'Processing...' : 'Ask AI assistant...'"
         @keypress="handleKeyPress"
         @focus="isExpanded = true"
+        :disabled="isProcessing || status !== 'connected'"
       />
-      <button class="ai-button" @click="handleSubmit" :disabled="!inputText.trim()">
-        <Sparkles :size="20" />
+      <button 
+        v-if="canUndo"
+        class="ai-button undo-button" 
+        @click="handleUndo"
+        title="Undo last AI edit"
+      >
+        <Undo2 :size="20" />
+      </button>
+      <button 
+        class="ai-button" 
+        @click="handleSubmit" 
+        :disabled="!inputText.trim() || isProcessing || status !== 'connected'"
+      >
+        <Sparkles :size="20" :class="{ spinning: isProcessing }" />
       </button>
     </div>
   </div>
@@ -66,13 +132,22 @@ function toggleExpand() {
   background-color: var(--color-background);
   border: 2px solid var(--color-primary);
   border-radius: 50px;
-  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) var(--spacing-l);
+  padding: var(--spacing-xs) var(--spacing-xs) var(--spacing-xs) var(--spacing-m);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: var(--transition);
 }
 
 .ai-assistant:hover .ai-container {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 0 4px currentColor;
 }
 
 .ai-input {
@@ -84,6 +159,11 @@ function toggleExpand() {
   color: var(--color-text-primary);
   width: 200px;
   transition: width 0.3s ease;
+}
+
+.ai-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .ai-assistant.expanded .ai-input {
@@ -122,6 +202,27 @@ function toggleExpand() {
   background-color: var(--color-surface);
   color: var(--color-text-secondary);
   cursor: not-allowed;
+}
+
+.undo-button {
+  background-color: var(--color-secondary, #666);
+}
+
+.undo-button:hover:not(:disabled) {
+  background-color: var(--color-secondary-hover, #777);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {

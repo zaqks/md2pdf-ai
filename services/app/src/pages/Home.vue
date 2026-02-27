@@ -16,6 +16,7 @@ import {
   setCurrentFileName,
   getFileList 
 } from '../utils/storage.js';
+import { useAiAssistant } from '../composables/useAiAssistant.js';
 
 const markdown = ref('# Hello World !');
 const isDragging = ref(false);
@@ -24,6 +25,18 @@ const previewContainerRef = ref(null);
 const editorRef = ref(null);
 const currentFileName = ref('');
 const files = ref([]);
+
+// AI Assistant
+const { 
+  status: aiStatus, 
+  isProcessing: aiProcessing, 
+  error: aiError,
+  connect: connectAi,
+  disconnect: disconnectAi,
+  askAi,
+  undo: undoAi,
+  canUndo: canUndoAi
+} = useAiAssistant();
 
 // Autosave interval (save every 2 seconds)
 let autosaveInterval = null;
@@ -205,11 +218,22 @@ function transformToPDF() {
   window.print();
 }
 
-function handleAiSubmit(query) {
-  // TODO: Integrate with AI service
-  console.log('AI Query:', query);
-  // For now, just append the query to markdown as a placeholder
-  markdown.value += `\n\n<!-- AI Query: ${query} -->\n`;
+async function handleAiSubmit(query) {
+  try {
+    const response = await askAi(query, markdown.value);
+    // Override current content with AI response
+    markdown.value = response;
+  } catch (error) {
+    console.error('AI Error:', error);
+    alert(`AI Error: ${error.message}`);
+  }
+}
+
+function handleAiUndo() {
+  const previousContent = undoAi();
+  if (previousContent !== null) {
+    markdown.value = previousContent;
+  }
 }
 
 // Handle editor scroll - sync to preview
@@ -287,6 +311,7 @@ function stopDrag() {
 // Setup preview scroll listener
 onMounted(() => {
   loadFile();
+  connectAi(); // Connect to AI WebSocket
   
   if (previewContainerRef.value) {
     previewContainerRef.value.addEventListener('scroll', onPreviewScroll, { passive: true });
@@ -294,6 +319,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  disconnectAi(); // Disconnect AI WebSocket
+  
   if (previewContainerRef.value) {
     previewContainerRef.value.removeEventListener('scroll', onPreviewScroll);
   }
@@ -361,7 +388,13 @@ onBeforeUnmount(() => {
       </div>
     </div>
     
-    <AiAssistant @submit="handleAiSubmit" />
+    <AiAssistant 
+      :status="aiStatus" 
+      :is-processing="aiProcessing"
+      :can-undo="canUndoAi()"
+      @submit="handleAiSubmit"
+      @undo="handleAiUndo"
+    />
   </div>
 </template>
 
