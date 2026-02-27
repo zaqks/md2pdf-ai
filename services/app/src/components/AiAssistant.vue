@@ -234,15 +234,27 @@ function toggleExpand() {
 
   .ai-container {
     width: 100%;
+    padding: var(--spacing-s) var(--spacing-s) var(--spacing-s) var(--spacing-m);
   }
 
   .ai-input {
     flex: 1;
     width: auto;
+    font-size: var(--font-size-m);
   }
 
   .ai-assistant.expanded .ai-input {
     width: auto;
+  }
+
+  .ai-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .status-indicator {
+    width: 12px;
+    height: 12px;
   }
 }
 </style>

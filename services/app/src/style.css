@@ -55,6 +55,22 @@ body {
 #app {
     height: 100%;
 }
+
+/* Prevent text size adjustment on mobile Safari */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Smooth scrolling on mobile */
+* {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Touch-friendly buttons */
+button {
+    -webkit-tap-highlight-color: transparent;
+}
+
 /* Markdown body styles for line breaks and word wrapping */
 .markdown-body {
     background-color: white;

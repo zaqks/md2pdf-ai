@@ -98,6 +98,39 @@ watch(() => props.markdown, () => {
   white-space: pre-wrap !important;
 }
 
+@media (max-width: 768px) {
+  .markdown-body {
+    padding: var(--spacing-m);
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .markdown-body :deep(h1) {
+    font-size: 1.8em;
+  }
+
+  .markdown-body :deep(h2) {
+    font-size: 1.5em;
+  }
+
+  .markdown-body :deep(h3) {
+    font-size: 1.3em;
+  }
+
+  .markdown-body :deep(img) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .markdown-body :deep(table) {
+    font-size: 14px;
+  }
+
+  .markdown-body :deep(pre) {
+    font-size: 14px;
+    padding: var(--spacing-m);
+  }
+}
+
 @media print {
   .markdown-body,
   .markdown-body * {

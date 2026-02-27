@@ -152,4 +152,28 @@ function handleKeydown(event) {
 .icon-button.cancel:hover {
   background-color: rgba(244, 67, 54, 0.1);
 }
+
+@media (max-width: 768px) {
+  .app-bar {
+    padding: var(--spacing-s) var(--spacing-m);
+    padding-left: 64px; /* Account for hamburger menu */
+  }
+
+  .file-name {
+    font-size: var(--font-size-s);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-name-input {
+    min-width: 150px;
+    font-size: var(--font-size-s);
+  }
+
+  .icon-button {
+    padding: var(--spacing-s);
+  }
+}
 </style>

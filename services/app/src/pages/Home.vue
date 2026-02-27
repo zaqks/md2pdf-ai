@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, X } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Editor/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -25,6 +25,8 @@ const previewContainerRef = ref(null);
 const editorRef = ref(null);
 const currentFileName = ref('');
 const files = ref([]);
+const isMobileMenuOpen = ref(false);
+const activeTab = ref('editor'); // 'editor' or 'preview'
 
 // AI Assistant
 const {
@@ -254,6 +256,18 @@ function handleAiUndo() {
   }
 }
 
+function toggleMobileMenu() {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+}
+
+function closeMobileMenu() {
+  isMobileMenuOpen.value = false;
+}
+
+function switchTab(tab) {
+  activeTab.value = tab;
+}
+
 
 
 // Handle editor scroll - sync to preview
@@ -356,13 +370,22 @@ onBeforeUnmount(() => {
 
 <template>
   <div id="app">
-    <aside class="sidebar">
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" @click="toggleMobileMenu" :class="{ open: isMobileMenuOpen }">
+      <Menu v-if="!isMobileMenuOpen" :size="24" />
+      <X v-else :size="24" />
+    </button>
+
+    <!-- Mobile Overlay -->
+    <div v-if="isMobileMenuOpen" class="mobile-overlay" @click="closeMobileMenu"></div>
+
+    <aside class="sidebar" :class="{ 'mobile-open': isMobileMenuOpen }">
       <div class="logo">
         <span class="logo-text">md2pdf-AI</span>
       </div>
 
-      <FileBrowser :files="files" :current-file-name="currentFileName" @select="selectFile" @delete="handleDeleteFile"
-        @create="createNewFile" />
+      <FileBrowser :files="files" :current-file-name="currentFileName" @select="(name) => { selectFile(name); closeMobileMenu(); }" @delete="handleDeleteFile"
+        @create="() => { createNewFile(); closeMobileMenu(); }" />
 
       <nav class="menu">
         <button class="button outline" @click="insertTableOfContents" title="Add Table of Contents">
@@ -392,12 +415,30 @@ onBeforeUnmount(() => {
     <div class="content-area">
       <AppBar :file-name="currentFileName" @rename="handleRenameFile" />
 
+      <!-- Mobile Tab Switcher -->
+      <div class="mobile-tabs">
+        <button 
+          class="tab-button" 
+          :class="{ active: activeTab === 'editor' }"
+          @click="switchTab('editor')"
+        >
+          Editor
+        </button>
+        <button 
+          class="tab-button" 
+          :class="{ active: activeTab === 'preview' }"
+          @click="switchTab('preview')"
+        >
+          Preview
+        </button>
+      </div>
+
       <div class="main-container" @mousemove="onDrag" @mouseup="stopDrag" @mouseleave="stopDrag">
-        <div ref="editorContainerRef" class="editor-container">
+        <div ref="editorContainerRef" class="editor-container" :class="{ 'mobile-hidden': activeTab !== 'editor' }">
           <Editor ref="editorRef" v-model="markdown" @scroll="onEditorScroll" />
         </div>
         <div class="drag-bar" :class="{ dragging: isDragging }" @mousedown="startDrag"></div>
-        <div ref="previewContainerRef" class="preview-container">
+        <div ref="previewContainerRef" class="preview-container" :class="{ 'mobile-hidden': activeTab !== 'preview' }">
           <Preview :markdown="markdown" />
         </div>
       </div>
@@ -644,33 +685,128 @@ onBeforeUnmount(() => {
   }
 }
 
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: var(--spacing-m);
+  left: var(--spacing-m);
+  z-index: 200;
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.95);
+}
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+}
+
+.mobile-tabs {
+  display: none;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-xs);
+  gap: var(--spacing-xs);
+}
+
+.tab-button {
+  flex: 1;
+  padding: var(--spacing-m);
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-m);
+  font-weight: 500;
+  font-family: var(--font-family);
+  cursor: pointer;
+  border-radius: var(--spacing-s);
+  transition: var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tab-button.active {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+}
+
 @media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .mobile-overlay {
+    display: block;
+  }
+
+  .mobile-tabs {
+    display: flex;
+  }
+
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--spacing-m);
+    position: fixed;
+    left: -100%;
+    top: 0;
+    width: 80%;
+    max-width: 320px;
+    height: 100vh;
+    z-index: 100;
+    background-color: var(--color-background);
+    border-right: 1px solid var(--color-border);
+    padding: var(--spacing-l);
+    transition: left 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .sidebar.mobile-open {
+    left: 0;
   }
 
   .sidebar:hover {
-    width: 100%;
+    width: 80%;
+    max-width: 320px;
   }
 
   .logo {
-    margin-bottom: var(--spacing-m);
+    opacity: 1;
+    margin-bottom: var(--spacing-l);
+    padding: 0;
+  }
+
+  .sidebar :deep(.file-browser) {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .menu {
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0;
-    margin-top: var(--spacing-m);
+    padding: 0 0 var(--spacing-l) 0;
+  }
+
+  .button {
+    justify-content: flex-start;
+    gap: var(--spacing-m);
+    padding: var(--spacing-m);
   }
 
   .button-text {
     opacity: 1;
+    width: auto;
   }
 
   .content-area {
@@ -679,6 +815,25 @@ onBeforeUnmount(() => {
 
   .main-container {
     flex-direction: column;
+  }
+
+  .drag-bar {
+    display: none;
+  }
+
+  .editor-container,
+  .preview-container {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .editor-container.mobile-hidden,
+  .preview-container.mobile-hidden {
+    display: none;
+  }
+
+  .preview-container {
+    padding: var(--spacing-l);
   }
 
   #app {

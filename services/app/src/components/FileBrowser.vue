@@ -249,4 +249,36 @@ function handleDelete(fileName, event) {
 .file-list::-webkit-scrollbar-thumb:hover {
   background: var(--color-secondary);
 }
+
+@media (max-width: 768px) {
+  .file-browser-header {
+    padding: var(--spacing-s);
+  }
+
+  .file-item {
+    padding: var(--spacing-m);
+    min-height: 56px; /* Larger touch target */
+  }
+
+  .delete-button {
+    opacity: 1; /* Always visible on mobile */
+    padding: var(--spacing-s);
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .new-file-button {
+    padding: var(--spacing-s);
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .file-name {
+    font-size: var(--font-size-m);
+  }
+
+  .file-date {
+    font-size: var(--font-size-s);
+  }
+}
 </style>

@@ -163,4 +163,19 @@ defineExpose({
 .cm-comment {
   color: #757575 !important;
 }
+
+@media (max-width: 768px) {
+  .CodeMirror {
+    font-size: 16px; /* Prevent zoom on iOS */
+    line-height: 1.6;
+  }
+
+  .CodeMirror-gutters {
+    width: 35px !important;
+  }
+
+  .CodeMirror-linenumber {
+    padding: 0 5px !important;
+  }
+}
 </style>
