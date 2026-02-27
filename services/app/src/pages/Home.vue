@@ -407,6 +407,18 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
+/* Hide file browser when collapsed */
+.sidebar :deep(.file-browser) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover :deep(.file-browser) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .logo-text {
   font-size: var(--font-size-xl);
   font-weight: 600;
@@ -560,7 +572,9 @@ onBeforeUnmount(() => {
   .sidebar,
   .editor-container,
   .drag-bar,
-  .content-area > *:not(.main-container) {
+  .content-area > *:not(.main-container),
+  aside,
+  nav {
     display: none !important;
   }
 
@@ -575,6 +589,11 @@ onBeforeUnmount(() => {
 
   #app {
     display: block;
+  }
+
+  /* Hide AI Assistant chat */
+  #app > *:not(.content-area) {
+    display: none !important;
   }
 }
 
