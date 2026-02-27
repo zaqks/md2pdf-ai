@@ -28,9 +28,6 @@ const files = ref([]);
 // Autosave interval (save every 2 seconds)
 let autosaveInterval = null;
 
-// Autosave interval (save every 2 seconds)
-let autosaveInterval = null;
-
 // Track scrolling state to prevent infinite loops
 let isScrollingEditor = false;
 let isScrollingPreview = false;
