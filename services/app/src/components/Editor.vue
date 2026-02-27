@@ -171,11 +171,17 @@ defineExpose({
   }
 
   .CodeMirror-gutters {
-    width: 35px !important;
+    min-width: 40px !important;
   }
 
   .CodeMirror-linenumber {
-    padding: 0 5px !important;
+    padding: 0 8px !important;
+    min-width: 24px !important;
+    text-align: right !important;
+  }
+
+  .CodeMirror-gutter {
+    min-width: 40px !important;
   }
 }
 </style>
