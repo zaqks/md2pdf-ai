@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, X } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Editor/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -371,9 +371,8 @@ onBeforeUnmount(() => {
 <template>
   <div id="app">
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" @click="toggleMobileMenu" :class="{ open: isMobileMenuOpen }">
-      <Menu v-if="!isMobileMenuOpen" :size="24" />
-      <X v-else :size="24" />
+    <button class="mobile-menu-toggle" @click="toggleMobileMenu" :class="{ hidden: isMobileMenuOpen }">
+      <Menu :size="24" />
     </button>
 
     <!-- Mobile Overlay -->
@@ -709,6 +708,11 @@ onBeforeUnmount(() => {
   transform: scale(0.95);
 }
 
+.mobile-menu-toggle.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .mobile-overlay {
   display: none;
   position: fixed;
@@ -835,6 +839,7 @@ onBeforeUnmount(() => {
 
   .preview-container {
     padding: var(--spacing-l);
+    padding-bottom: 100px; /* Space for AI input */
   }
 
   #app {
