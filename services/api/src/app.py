@@ -1,14 +1,18 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import json
+import os  # Import os to read environment variables
 from .llm import ask_llm
 
 app = FastAPI()
 
+# Read APP_URL from environment variables
+APP_URL = os.getenv("APP_URL", "http://localhost:8000")
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=[APP_URL],  # Restrict origins to APP_URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
