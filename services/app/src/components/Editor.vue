@@ -21,7 +21,7 @@ let editor = null;
 onMounted(() => {
   editor = CodeMirror.fromTextArea(editorElement.value, {
     mode: 'gfm',
-    theme: 'darcula',
+    theme: 'default',
     lineNumbers: true,
     lineWrapping: true
   });
@@ -69,13 +69,15 @@ defineExpose({
 </template>
 
 <style>
-/* Dark editor theme - keep darcula's original dark appearance */
+/* Dark editor theme matching Nike theme colors */
 .CodeMirror {
   height: 100% !important;
   width: 100%;
   font-size: 14px;
   line-height: 1.6;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background-color: #1a1a1a !important;
+  color: #e0e0e0 !important;
 }
 
 .CodeMirror-scroll {
@@ -83,5 +85,57 @@ defineExpose({
   padding: 20px;
 }
 
-/* Let darcula theme handle colors naturally */
+.CodeMirror-gutters {
+  background-color: #0f0f0f !important;
+  border-right: 1px solid #2a2a2a !important;
+}
+
+.CodeMirror-linenumber {
+  color: #757575 !important;
+  padding: 0 12px;
+}
+
+.CodeMirror-cursor {
+  border-left: 2px solid #ffffff !important;
+}
+
+.CodeMirror-selected {
+  background-color: rgba(117, 117, 117, 0.2) !important;
+}
+
+.CodeMirror-line::selection,
+.CodeMirror-line > span::selection,
+.CodeMirror-line > span > span::selection {
+  background-color: rgba(117, 117, 117, 0.3);
+}
+
+/* Syntax highlighting matching theme */
+.cm-header {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.cm-quote {
+  color: #9e9e9e !important;
+  font-style: italic;
+}
+
+.cm-link {
+  color: #e0e0e0 !important;
+  text-decoration: underline;
+}
+
+.cm-strong {
+  font-weight: 600 !important;
+  color: #ffffff !important;
+}
+
+.cm-em {
+  font-style: italic;
+  color: #bdbdbd !important;
+}
+
+.cm-comment {
+  color: #757575 !important;
+}
 </style>
