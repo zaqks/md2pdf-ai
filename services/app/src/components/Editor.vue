@@ -101,32 +101,23 @@ defineExpose({
   height: 100% !important;
   width: 100%;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   background-color: #1a1a1a !important;
   color: #e0e0e0 !important;
-  box-sizing: border-box;
 }
 
 .CodeMirror-scroll {
   will-change: scroll-position;
-  padding: 20px;
-  box-sizing: border-box;
-  min-height: 100%;
 }
 
 .CodeMirror-gutters {
   background-color: #0f0f0f !important;
   border-right: 1px solid #2a2a2a !important;
-  padding: 0 3px 0 0;
-  min-width: 45px;
 }
 
 .CodeMirror-linenumber {
   color: #757575 !important;
-  padding: 0 8px;
-  text-align: right;
-  min-width: 35px;
 }
 
 .CodeMirror-cursor {
