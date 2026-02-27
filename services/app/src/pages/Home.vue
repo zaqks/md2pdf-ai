@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
         <input ref="fileInput" type="file" accept=".md,.markdown,.txt" @change="uploadFile" style="display: none">
         <button class="button filled" @click="transformToPDF">
           <Sparkles :size="18" />
-          <span>Transform</span>
+          <span>Export</span>
         </button>
       </div>
     </header>
