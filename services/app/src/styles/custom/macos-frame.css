@@ -73,6 +73,14 @@
         page-break-after: avoid;
     }
     
+    /* Prevent images from breaking across pages */
+    .markdown-body img {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        page-break-before: auto;
+        page-break-after: auto;
+    }
+    
     /* Ensure colors print correctly */
     .markdown-body .code-block-wrapper,
     .markdown-body .code-block-header,
