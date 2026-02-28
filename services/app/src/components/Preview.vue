@@ -35,13 +35,34 @@ const showWatermark = computed(() => {
   return watermarkParam !== 'false';
 });
 
-// Configure marked with custom renderer for heading IDs
+// Configure marked with custom renderer for heading IDs and code blocks
 const renderer = new marked.Renderer();
 const originalHeadingRenderer = renderer.heading.bind(renderer);
+const originalCodeRenderer = renderer.code.bind(renderer);
 
 renderer.heading = function(text, level, raw) {
   const slug = raw.toLowerCase().trim().replace(/\s+/g, '-');
   return `<h${level} id="${slug}">${text}</h${level}>`;
+};
+
+// Custom code block renderer with macOS frame as real HTML elements
+renderer.code = function(code, language) {
+  const highlighted = language && hljs.getLanguage(language)
+    ? hljs.highlight(code, { language }).value
+    : hljs.highlightAuto(code).value;
+  
+  return `
+    <div class="code-block-wrapper">
+      <div class="code-block-header">
+        <div class="code-block-dots">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+      </div>
+      <pre><code class="hljs ${language ? 'language-' + language : ''}">${highlighted}</code></pre>
+    </div>
+  `;
 };
 
 marked.setOptions({
