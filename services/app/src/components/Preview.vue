@@ -119,9 +119,6 @@ defineExpose({
   padding: 20px;
   padding-bottom: 20px;
   overflow-x: visible;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
   /* Performance optimizations */
   contain: layout style paint;
   will-change: contents;
