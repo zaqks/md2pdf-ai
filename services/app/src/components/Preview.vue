@@ -79,16 +79,26 @@ watch(() => props.markdown, () => {
 </script>
 
 <template>
-  <div ref="previewContainer" class="markdown-body" v-html="previewHtml"></div>
+  <div class="preview-wrapper">
+    <div ref="previewContainer" class="markdown-body" v-html="previewHtml"></div>
+    <div class="preview-footer">
+      rendered by <a href="https://github.com/zaqks/md2pdf-ai" target="_blank" rel="noopener noreferrer">https://github.com/zaqks/md2pdf-ai</a>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.preview-wrapper {
+  height: 100%;
+  overflow-y: auto;
+}
+
 /* Use github-markdown-css and highlight.js for preview styling */
 /* This isolates preview from the themed UI */
 .markdown-body {
   background-color: white;
   padding: 20px;
-  padding-bottom: 120px; /* Add space at bottom for chatbot */
+  padding-bottom: 20px;
   overflow-x: visible;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -98,6 +108,25 @@ watch(() => props.markdown, () => {
   will-change: contents;
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+.preview-footer {
+  background-color: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  border-top: 1px solid #e1e4e8;
+  margin-bottom: 120px; /* Add space at bottom for chatbot */
+}
+
+.preview-footer a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.preview-footer a:hover {
+  text-decoration: underline;
 }
 
 /* Ensure proper wrapping for tables, pre, and code */
@@ -159,6 +188,12 @@ watch(() => props.markdown, () => {
 }
 
 @media print {
+  .preview-footer {
+    display: block !important;
+    page-break-before: avoid;
+    margin-bottom: 0 !important;
+  }
+
   .markdown-body {
     overflow: visible !important;
     padding: 20px !important;
