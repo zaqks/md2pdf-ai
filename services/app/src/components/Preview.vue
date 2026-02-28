@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { ref, watch, onMounted, nextTick, computed } from 'vue';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 
@@ -15,6 +15,13 @@ const emit = defineEmits(['scroll']);
 const previewHtml = ref('');
 const previewContainer = ref(null);
 let updateTimeout = null;
+
+// Check for watermark query parameter
+const showWatermark = computed(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const watermarkParam = urlParams.get('watermark');
+  return watermarkParam !== 'false';
+});
 
 // Configure marked with custom renderer for heading IDs
 const renderer = new marked.Renderer();
@@ -81,7 +88,7 @@ watch(() => props.markdown, () => {
 <template>
   <div class="preview-wrapper">
     <div ref="previewContainer" class="markdown-body" v-html="previewHtml"></div>
-    <div class="preview-footer">
+    <div v-if="showWatermark" class="preview-footer">
       rendered by <a href="https://github.com/zaqks/md2pdf-ai" target="_blank" rel="noopener noreferrer">https://github.com/zaqks/md2pdf-ai</a>
     </div>
   </div>
