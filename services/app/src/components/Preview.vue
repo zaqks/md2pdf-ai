@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 
@@ -13,6 +13,8 @@ const props = defineProps({
 const emit = defineEmits(['scroll']);
 
 const previewHtml = ref('');
+const previewContainer = ref(null);
+let updateTimeout = null;
 
 // Configure marked with custom renderer for heading IDs
 const renderer = new marked.Renderer();
@@ -44,8 +46,27 @@ marked.setOptions({
   gfm: true
 });
 
+// Debounced update to avoid re-rendering on every keystroke
 function updatePreview() {
-  previewHtml.value = marked.parse(props.markdown);
+  // Clear any pending updates
+  clearTimeout(updateTimeout);
+  
+  // Schedule new update after 500ms of inactivity
+  updateTimeout = setTimeout(() => {
+    requestAnimationFrame(() => {
+      previewHtml.value = marked.parse(props.markdown);
+      
+      // Re-apply syntax highlighting to newly rendered code blocks
+      nextTick(() => {
+        if (previewContainer.value) {
+          const codeBlocks = previewContainer.value.querySelectorAll('pre code:not(.hljs)');
+          codeBlocks.forEach(block => {
+            hljs.highlightElement(block);
+          });
+        }
+      });
+    });
+  }, 500); // Wait 500ms after typing stops
 }
 
 onMounted(() => {
@@ -58,7 +79,7 @@ watch(() => props.markdown, () => {
 </script>
 
 <template>
-  <div class="markdown-body" v-html="previewHtml"></div>
+  <div ref="previewContainer" class="markdown-body" v-html="previewHtml"></div>
 </template>
 
 <style scoped>
@@ -72,6 +93,11 @@ watch(() => props.markdown, () => {
   overflow-wrap: break-word;
   word-wrap: break-word;
   word-break: break-word;
+  /* Performance optimizations */
+  contain: layout style paint;
+  will-change: contents;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Ensure proper wrapping for tables, pre, and code */
