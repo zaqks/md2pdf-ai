@@ -21,7 +21,7 @@ import { useAiAssistant } from '../composables/useAiAssistant.js';
 const markdown = ref('# Hello World !');
 const isDragging = ref(false);
 const editorContainerRef = ref(null);
-const previewContainerRef = ref(null);
+const previewRef = ref(null);
 const editorRef = ref(null);
 const currentFileName = ref('');
 const files = ref([]);
@@ -272,7 +272,7 @@ function switchTab(tab) {
 
 // Handle editor scroll - sync to preview
 function onEditorScroll(scrollPercentage) {
-  if (isScrollingPreview || !previewContainerRef.value) return;
+  if (isScrollingPreview || !previewRef.value) return;
 
   isScrollingEditor = true;
 
@@ -281,9 +281,8 @@ function onEditorScroll(scrollPercentage) {
   }
 
   requestAnimationFrame(() => {
-    if (previewContainerRef.value && isFinite(scrollPercentage)) {
-      const previewScrollHeight = previewContainerRef.value.scrollHeight - previewContainerRef.value.clientHeight;
-      previewContainerRef.value.scrollTop = scrollPercentage * previewScrollHeight;
+    if (previewRef.value && isFinite(scrollPercentage)) {
+      previewRef.value.scrollTo(scrollPercentage);
     }
   });
 
@@ -293,8 +292,8 @@ function onEditorScroll(scrollPercentage) {
 }
 
 // Handle preview scroll - sync to editor
-function onPreviewScroll() {
-  if (isScrollingEditor || !previewContainerRef.value || !editorRef.value) return;
+function onPreviewScroll(scrollPercentage) {
+  if (isScrollingEditor || !editorRef.value) return;
 
   isScrollingPreview = true;
 
@@ -303,11 +302,6 @@ function onPreviewScroll() {
   }
 
   requestAnimationFrame(() => {
-    if (!previewContainerRef.value) return;
-
-    const scrollPercentage = previewContainerRef.value.scrollTop /
-      (previewContainerRef.value.scrollHeight - previewContainerRef.value.clientHeight);
-
     if (isFinite(scrollPercentage) && editorRef.value) {
       editorRef.value.scrollTo(scrollPercentage);
     }
@@ -342,22 +336,15 @@ function stopDrag() {
   isDragging.value = false;
 }
 
-// Setup preview scroll listener
+// Setup on mount
 onMounted(() => {
   loadFile();
   connectAi(); // Connect to AI WebSocket
-
-  if (previewContainerRef.value) {
-    previewContainerRef.value.addEventListener('scroll', onPreviewScroll, { passive: true });
-  }
 });
 
 onBeforeUnmount(() => {
   disconnectAi(); // Disconnect AI WebSocket
 
-  if (previewContainerRef.value) {
-    previewContainerRef.value.removeEventListener('scroll', onPreviewScroll);
-  }
   if (editorScrollTimeout) {
     clearTimeout(editorScrollTimeout);
   }
@@ -438,8 +425,8 @@ onBeforeUnmount(() => {
           <Editor ref="editorRef" v-model="markdown" @scroll="onEditorScroll" />
         </div>
         <div class="drag-bar" :class="{ dragging: isDragging }" @mousedown="startDrag"></div>
-        <div ref="previewContainerRef" class="preview-container" :class="{ 'mobile-hidden': activeTab !== 'preview' }">
-          <Preview :markdown="markdown" />
+        <div class="preview-container" :class="{ 'mobile-hidden': activeTab !== 'preview' }">
+          <Preview ref="previewRef" :markdown="markdown" @scroll="onPreviewScroll" />
         </div>
       </div>
     </div>

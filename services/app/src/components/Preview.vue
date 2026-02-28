@@ -14,7 +14,19 @@ const emit = defineEmits(['scroll']);
 
 const previewHtml = ref('');
 const previewContainer = ref(null);
+const previewWrapper = ref(null);
 let updateTimeout = null;
+
+// Handle scroll events
+function handleScroll() {
+  if (!previewWrapper.value) return;
+  
+  const scrollTop = previewWrapper.value.scrollTop;
+  const scrollHeight = previewWrapper.value.scrollHeight - previewWrapper.value.clientHeight;
+  const scrollPercentage = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+  
+  emit('scroll', scrollPercentage);
+}
 
 // Check for watermark query parameter
 const showWatermark = computed(() => {
@@ -62,16 +74,6 @@ function updatePreview() {
   updateTimeout = setTimeout(() => {
     requestAnimationFrame(() => {
       previewHtml.value = marked.parse(props.markdown);
-      
-      // Re-apply syntax highlighting to newly rendered code blocks
-      nextTick(() => {
-        if (previewContainer.value) {
-          const codeBlocks = previewContainer.value.querySelectorAll('pre code:not(.hljs)');
-          codeBlocks.forEach(block => {
-            hljs.highlightElement(block);
-          });
-        }
-      });
     });
   }, 500); // Wait 500ms after typing stops
 }
@@ -83,10 +85,20 @@ onMounted(() => {
 watch(() => props.markdown, () => {
   updatePreview();
 });
+
+// Expose scrollTo method for parent to control
+defineExpose({
+  scrollTo: (percentage) => {
+    if (previewWrapper.value && isFinite(percentage)) {
+      const scrollHeight = previewWrapper.value.scrollHeight - previewWrapper.value.clientHeight;
+      previewWrapper.value.scrollTop = percentage * scrollHeight;
+    }
+  }
+});
 </script>
 
 <template>
-  <div class="preview-wrapper">
+  <div ref="previewWrapper" class="preview-wrapper" @scroll="handleScroll">
     <div ref="previewContainer" class="markdown-body" v-html="previewHtml"></div>
     <div v-if="showWatermark" class="preview-footer">
       rendered by <a href="https://github.com/zaqks/md2pdf-ai" target="_blank" rel="noopener noreferrer">https://github.com/zaqks/md2pdf-ai</a>
