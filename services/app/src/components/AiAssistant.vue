@@ -59,6 +59,11 @@ function handleSubmit() {
   if (inputText.value.trim() && !props.isProcessing) {
     emit('submit', inputText.value);
     inputText.value = '';
+    // Reset textarea height
+    const textarea = document.querySelector('.ai-input');
+    if (textarea) {
+      textarea.style.height = 'auto';
+    }
   }
 }
 
