@@ -67,6 +67,7 @@ watch(() => props.markdown, () => {
 .markdown-body {
   background-color: white;
   padding: 20px;
+  padding-bottom: 120px; /* Add space at bottom for chatbot */
   overflow-x: visible;
   overflow-wrap: break-word;
   word-wrap: break-word;

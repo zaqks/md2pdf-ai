@@ -109,6 +109,7 @@ defineExpose({
 
 .CodeMirror-scroll {
   will-change: scroll-position;
+  padding-bottom: 120px !important; /* Add space at bottom for chatbot */
 }
 
 .CodeMirror-gutters {
