@@ -3,6 +3,7 @@ import 'github-markdown-css/github-markdown-light.css'
 import 'highlight.js/styles/github-dark.css'
 
 import './styles/style.css'
+import './styles/custom/markdown-preview.css'
 import './styles/custom/macos-frame.css'
 
 

@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
-import Preview from '../components/Editor/Preview.vue';
+import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
 import AppBar from '../components/AppBar.vue';
 import FileBrowser from '../components/FileBrowser.vue';

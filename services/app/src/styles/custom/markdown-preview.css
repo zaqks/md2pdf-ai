@@ -1,0 +1,33 @@
+/* Markdown body styles for line breaks and word wrapping */
+.markdown-body {
+    background-color: white;
+    overflow-x: visible;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Ensure tables and pre/code blocks wrap properly */
+.markdown-body table {
+    display: block;
+    width: 100% !important;
+    overflow-x: visible !important;
+    word-wrap: break-word;
+}
+
+.markdown-body pre {
+    overflow-x: visible !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
+.markdown-body code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
+.markdown-body pre code {
+    white-space: pre-wrap !important;
+}

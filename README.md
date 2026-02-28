@@ -15,21 +15,23 @@ md2pdf-ai/
 │   │   │   ├── components/
 │   │   │   │   ├── AiAssistant.vue  # AI assistant component
 │   │   │   │   ├── AppBar.vue       # Application bar component
+│   │   │   │   ├── Editor.vue       # CodeMirror markdown editor
 │   │   │   │   ├── FileBrowser.vue  # File browser component
-│   │   │   │   ├── Panel.vue        # Panel component
-│   │   │   │   └── Editor/
-│   │   │   │       ├── MD.vue       # Markdown editor component
-│   │   │   │       └── Preview.vue  # Markdown preview component
+│   │   │   │   └── Preview.vue  # Markdown preview component
 │   │   │   ├── composables/
 │   │   │   │   ├── useAiAssistant.js # AI assistant composable
 │   │   │   │   └── useWebSocket.js   # WebSocket composable
 │   │   │   ├── pages/
 │   │   │   │   └── Home.vue         # Main application page
+│   │   │   ├── styles/
+│   │   │   │   ├── style.css        # Main styles
+│   │   │   │   └── custom/
+│   │   │   │       ├── macos-frame.css      # macOS-style code block styling
+│   │   │   │       └── markdown-preview.css # Markdown preview styles
 │   │   │   ├── utils/
 │   │   │   │   └── storage.js       # LocalStorage utility
 │   │   │   ├── App.vue
-│   │   │   ├── main.js
-│   │   │   └── style.css
+│   │   │   └── main.js
 │   │   └── Dockerfile
 │   └── api/                 # API service
 │       ├── src/
