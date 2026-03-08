@@ -13,12 +13,13 @@
           ref="fileInput"
           type="file"
           accept="image/*"
+          multiple
           @change="handleFileSelect"
           style="display: none"
         />
         <button @click="$refs.fileInput.click()" class="upload-btn">
           <Upload :size="18" />
-          <span>Upload Image</span>
+          <span>Upload Images</span>
         </button>
       </div>
       
@@ -92,14 +93,15 @@ async function loadMedia() {
 }
 
 async function handleFileSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
   
   uploading.value = true;
   error.value = '';
   
   try {
-    const result = await uploadMedia(file);
+    // Upload all files in parallel
+    await Promise.all(files.map(file => uploadMedia(file)));
     await loadMedia();
   } catch (err) {
     error.value = 'Failed to upload: ' + err.message;

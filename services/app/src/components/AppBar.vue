@@ -60,12 +60,10 @@ function handleKeydown(event) {
 <template>
   <div class="app-bar">
     <div class="left-section">
-      <button @click="emit('toggleCloudMode')" class="mode-button" :class="{ active: isCloudMode }"
-        :title="isCloudMode ? 'Switch to Offline Mode' : 'Switch to Cloud Mode'">
-        <Cloud v-if="isCloudMode" :size="18" />
-        <CloudOff v-else :size="18" />
-        <span class="mode-text">{{ isCloudMode ? 'Cloud' : 'Offline' }}</span>
-      </button>
+      <div v-if="isCloudMode && isAuthenticated" class="user-info">
+        <User :size="16" />
+        <span class="username">{{ user?.username }}</span>
+      </div>
     </div>
 
     <div class="file-name-container">
@@ -87,19 +85,6 @@ function handleKeydown(event) {
     </div>
 
     <div class="right-section">
-      <button v-if="isCloudMode && canShare" @click="emit('share')" class="icon-button share" title="Share Document">
-        <Share2 :size="18" />
-      </button>
-
-      <div v-if="isCloudMode && isAuthenticated" class="auth-section">
-        <div class="user-info">
-          <User :size="16" />
-          <span class="username">{{ user?.username }}</span>
-        </div>
-        <button @click="emit('logout')" class="icon-button logout" title="Reset User">
-          <LogOut :size="18" />
-        </button>
-      </div>
     </div>
   </div>
 </template>

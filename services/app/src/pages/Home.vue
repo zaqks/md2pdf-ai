@@ -500,6 +500,15 @@ onBeforeUnmount(() => {
         @create="() => { createNewFile(); closeMobileMenu(); }" />
 
       <nav class="menu">
+        <button class="button" :class="isCloudMode ? 'filled' : 'outline'" @click="toggleCloudMode" :title="isCloudMode ? 'Switch to Offline Mode' : 'Switch to Cloud Mode'">
+          <Cloud v-if="!isCloudMode" :size="20" />
+          <CloudOff v-else :size="20" />
+          <span class="button-text">{{ isCloudMode ? 'Offline' : 'Cloud' }}</span>
+        </button>
+        <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
+          <Share2 :size="20" />
+          <span class="button-text">Copy Link</span>
+        </button>
         <button v-if="isCloudMode" class="button outline" @click="openCloudBrowser" title="Browse Cloud Documents">
           <FolderOpen :size="20" />
           <span class="button-text">Cloud Files</span>
