@@ -84,7 +84,12 @@ async function loadMedia() {
   error.value = '';
   
   try {
-    mediaList.value = await getMediaList();
+    const mediaItems = await getMediaList();
+    // Add URL to each media item for preview
+    mediaList.value = mediaItems.map(media => ({
+      ...media,
+      url: getMediaUrl(media.id)
+    }));
   } catch (err) {
     error.value = 'Failed to load media: ' + err.message;
   } finally {
