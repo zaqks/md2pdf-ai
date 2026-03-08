@@ -35,42 +35,17 @@ function getAuthHeaders() {
   return headers;
 }
 
-// Register user
-export async function register(username, email, password) {
+// Get or create anonymous user
+export async function getOrCreateUser() {
   try {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await fetch(`${API_URL}/api/auth/get-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Registration failed');
-    }
-
-    const data = await response.json();
-    setAuthToken(data.access_token);
-    user.value = data.user;
-    
-    return { success: true, user: data.user };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-}
-
-// Login user
-export async function login(username, password) {
-  try {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Login failed');
+      throw new Error(error.detail || 'Failed to get user token');
     }
 
     const data = await response.json();
@@ -119,8 +94,7 @@ export function useAuth() {
     user,
     token,
     isAuthenticated,
-    register,
-    login,
+    getOrCreateUser,
     logout,
     getCurrentUser,
     getAuthHeaders,

@@ -25,7 +25,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['rename', 'toggleCloudMode', 'login', 'logout', 'share']);
+const emit = defineEmits(['rename', 'toggleCloudMode', 'logout', 'share']);
 
 const isEditing = ref(false);
 const editedName = ref(props.fileName);
@@ -95,18 +95,13 @@ function handleKeydown(event) {
         <Share2 :size="18" />
       </button>
 
-      <div v-if="isCloudMode" class="auth-section">
-        <template v-if="isAuthenticated">
-          <div class="user-info">
-            <User :size="16" />
-            <span class="username">{{ user?.username }}</span>
-          </div>
-          <button @click="emit('logout')" class="icon-button logout" title="Logout">
-            <LogOut :size="18" />
-          </button>
-        </template>
-        <button v-else @click="emit('login')" class="login-button">
-          Login
+      <div v-if="isCloudMode && isAuthenticated" class="auth-section">
+        <div class="user-info">
+          <User :size="16" />
+          <span class="username">{{ user?.username }}</span>
+        </div>
+        <button @click="emit('logout')" class="icon-button logout" title="Reset User">
+          <LogOut :size="18" />
         </button>
       </div>
     </div>

@@ -6,7 +6,6 @@ import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
 import AppBar from '../components/AppBar.vue';
 import FileBrowser from '../components/FileBrowser.vue';
-import AuthModal from '../components/AuthModal.vue';
 import CloudBrowser from '../components/CloudBrowser.vue';
 import MediaBrowser from '../components/MediaBrowser.vue';
 import {
@@ -35,8 +34,7 @@ const activeTab = ref('editor'); // 'editor' or 'preview'
 
 // Cloud mode
 const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl } = useCloudStorage();
-const { isAuthenticated, user, logout: logoutUser, getCurrentUser } = useAuth();
-const showAuthModal = ref(false);
+const { isAuthenticated, user, logout: logoutUser, getCurrentUser, getOrCreateUser } = useAuth();
 const showCloudBrowser = ref(false);
 const showMediaBrowser = ref(false);
 const currentDocumentId = ref(null);
@@ -127,14 +125,18 @@ watch(markdown, () => {
 // Cloud mode handlers
 async function toggleCloudMode() {
   const newMode = !isCloudMode.value;
-  
+
   if (newMode && !isAuthenticated.value) {
-    showAuthModal.value = true;
-    return;
+    // Auto-create anonymous user
+    const result = await getOrCreateUser();
+    if (!result.success) {
+      alert('Failed to enable cloud mode: ' + result.error);
+      return;
+    }
   }
-  
+
   setCloudMode(newMode);
-  
+
   if (newMode) {
     // Switching to cloud mode
     showCloudBrowser.value = true;
@@ -145,23 +147,11 @@ async function toggleCloudMode() {
   }
 }
 
-function handleLogin() {
-  showAuthModal.value = true;
-}
-
 function handleLogout() {
   logoutUser();
   setCloudMode(false);
   currentDocumentId.value = null;
   loadFile();
-}
-
-function handleAuthSuccess() {
-  showAuthModal.value = false;
-  if (!isCloudMode.value) {
-    setCloudMode(true);
-  }
-  showCloudBrowser.value = true;
 }
 
 async function handleSelectCloudDocument(doc) {
@@ -181,7 +171,7 @@ async function handleCreateCloudDocument() {
   try {
     const title = prompt('Enter document title:', 'Untitled Document');
     if (!title) return;
-    
+
     const doc = await createDocument(title, '# ' + title + '\n\n');
     currentFileName.value = doc.title;
     markdown.value = doc.content;
@@ -195,7 +185,7 @@ async function handleCreateCloudDocument() {
 
 function openCloudBrowser() {
   if (!isAuthenticated.value) {
-    showAuthModal.value = true;
+    toggleCloudMode();
     return;
   }
   showCloudBrowser.value = true;
@@ -203,7 +193,7 @@ function openCloudBrowser() {
 
 function openMediaBrowser() {
   if (!isAuthenticated.value) {
-    showAuthModal.value = true;
+    toggleCloudMode();
     return;
   }
   showMediaBrowser.value = true;
@@ -219,13 +209,13 @@ async function handleShareDocument() {
     alert('No cloud document loaded');
     return;
   }
-  
+
   try {
     // Toggle public status
     const newPublicStatus = !currentDocumentIsPublic.value;
     await updateDocument(currentDocumentId.value, { is_public: newPublicStatus });
     currentDocumentIsPublic.value = newPublicStatus;
-    
+
     if (newPublicStatus) {
       const shareUrl = getShareUrl(currentDocumentId.value);
       prompt('Document is now public. Share this URL:', shareUrl);
@@ -482,7 +472,7 @@ function stopDrag() {
 onMounted(async () => {
   loadFile();
   connectAi(); // Connect to AI WebSocket
-  
+
   // Try to restore user session if in cloud mode
   if (isCloudMode.value && isAuthenticated.value) {
     await getCurrentUser();
@@ -521,25 +511,16 @@ onBeforeUnmount(() => {
         <span class="logo-text">md2pdf-AI</span>
       </div>
 
-      <FileBrowser :files="files" :current-file-name="currentFileName" @select="(name) => { selectFile(name); closeMobileMenu(); }" @delete="handleDeleteFile"
+      <FileBrowser :files="files" :current-file-name="currentFileName"
+        @select="(name) => { selectFile(name); closeMobileMenu(); }" @delete="handleDeleteFile"
         @create="() => { createNewFile(); closeMobileMenu(); }" />
 
       <nav class="menu">
-        <button 
-          v-if="isCloudMode" 
-          class="button outline" 
-          @click="openCloudBrowser" 
-          title="Browse Cloud Documents"
-        >
+        <button v-if="isCloudMode" class="button outline" @click="openCloudBrowser" title="Browse Cloud Documents">
           <FolderOpen :size="20" />
           <span class="button-text">Cloud Files</span>
         </button>
-        <button 
-          v-if="isCloudMode" 
-          class="button outline" 
-          @click="openMediaBrowser" 
-          title="Media Library"
-        >
+        <button v-if="isCloudMode" class="button outline" @click="openMediaBrowser" title="Media Library">
           <ImageIcon :size="20" />
           <span class="button-text">Media</span>
         </button>
@@ -570,31 +551,22 @@ onBeforeUnmount(() => {
     <div class="content-area">
       <AppBar 
         :file-name="currentFileName" 
-        :is-cloud-mode="isCloudMode"
+        :is-cloud-mode="isCloudMode" 
         :is-authenticated="isAuthenticated"
-        :user="user"
-        :can-share="isCloudMode && !!currentDocumentId"
+        :user="user" 
+        :can-share="isCloudMode && !!currentDocumentId" 
         @rename="handleRenameFile"
-        @toggle-cloud-mode="toggleCloudMode"
-        @login="handleLogin"
-        @logout="handleLogout"
-        @share="handleShareDocument"
+        @toggle-cloud-mode="toggleCloudMode" 
+        @logout="handleLogout" 
+        @share="handleShareDocument" 
       />
-
+      
       <!-- Mobile Tab Switcher -->
       <div class="mobile-tabs">
-        <button 
-          class="tab-button" 
-          :class="{ active: activeTab === 'editor' }"
-          @click="switchTab('editor')"
-        >
+        <button class="tab-button" :class="{ active: activeTab === 'editor' }" @click="switchTab('editor')">
           Editor
         </button>
-        <button 
-          class="tab-button" 
-          :class="{ active: activeTab === 'preview' }"
-          @click="switchTab('preview')"
-        >
+        <button class="tab-button" :class="{ active: activeTab === 'preview' }" @click="switchTab('preview')">
           Preview
         </button>
       </div>
@@ -610,29 +582,20 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()" 
+    <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()"
       :hide-on-mobile="isMobileMenuOpen" @submit="handleAiSubmit" @undo="handleAiUndo" />
-    
+
     <!-- Modals -->
-    <AuthModal v-if="showAuthModal" @close="showAuthModal = false" @success="handleAuthSuccess" />
-    
     <div v-if="showCloudBrowser" class="modal-overlay" @click.self="showCloudBrowser = false">
-      <CloudBrowser 
-        @close="showCloudBrowser = false" 
-        @select="handleSelectCloudDocument"
-        @create="handleCreateCloudDocument"
-      />
+      <CloudBrowser @close="showCloudBrowser = false" @select="handleSelectCloudDocument"
+        @create="handleCreateCloudDocument" />
     </div>
-    
+
     <div v-if="showMediaBrowser" class="modal-overlay" @click.self="showMediaBrowser = false">
-      <MediaBrowser 
-        @close="showMediaBrowser = false"
-        @insert="handleMediaInsert"
-      />
+      <MediaBrowser @close="showMediaBrowser = false" @insert="handleMediaInsert" />
     </div>
   </div>
 </template>
-
 <style scoped>
 /* Clean design system */
 #app {
@@ -885,6 +848,7 @@ onBeforeUnmount(() => {
 }
 
 @media print {
+
   /* Hide everything except preview content */
   .sidebar,
   .editor-container,
@@ -897,12 +861,12 @@ onBeforeUnmount(() => {
   }
 
   /* Hide AppBar and other content-area children except main-container */
-  .content-area > *:not(.main-container) {
+  .content-area>*:not(.main-container) {
     display: none !important;
   }
 
   /* Hide AI Assistant */
-  #app > *:not(.content-area) {
+  #app>*:not(.content-area) {
     display: none !important;
   }
 
@@ -1071,7 +1035,7 @@ onBeforeUnmount(() => {
     margin-left: 0;
   }
 
-  .content-area > :deep(.app-bar) {
+  .content-area> :deep(.app-bar) {
     position: sticky;
     top: 0;
     z-index: 50;
@@ -1080,7 +1044,8 @@ onBeforeUnmount(() => {
 
   .mobile-tabs {
     position: sticky;
-    top: 50px; /* Height of app-bar */
+    top: 50px;
+    /* Height of app-bar */
     z-index: 50;
     background-color: var(--color-surface);
   }
@@ -1097,7 +1062,8 @@ onBeforeUnmount(() => {
   .preview-container {
     flex: 1;
     min-height: 0;
-    padding-bottom: 80px; /* Space for AI input */
+    padding-bottom: 80px;
+    /* Space for AI input */
   }
 
   .editor-container.mobile-hidden,
@@ -1107,7 +1073,8 @@ onBeforeUnmount(() => {
 
   .preview-container {
     padding: var(--spacing-l);
-    padding-bottom: 100px; /* Space for AI input */
+    padding-bottom: 100px;
+    /* Space for AI input */
   }
 
   #app {
