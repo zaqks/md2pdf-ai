@@ -204,9 +204,9 @@ onMounted(() => {
 
 .upload-btn {
   padding: var(--spacing-m);
-  background: var(--color-primary);
-  color: white;
-  border: none;
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
   border-radius: 6px;
   font-size: var(--font-size-m);
   font-weight: 500;
@@ -218,7 +218,9 @@ onMounted(() => {
 }
 
 .upload-btn:hover {
-  background: var(--color-primary-dark);
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  transform: translateY(-1px);
 }
 
 .uploading,
