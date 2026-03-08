@@ -57,6 +57,9 @@ const {
 // Autosave interval (save every 2 seconds)
 let autosaveInterval = null;
 
+// Computed: Check if cloud mode is available (AI must be connected)
+const isCloudModeAvailable = computed(() => aiStatus.value === 'connected');
+
 // Track scrolling state to prevent infinite loops
 let isScrollingEditor = false;
 let isScrollingPreview = false;
@@ -136,6 +139,12 @@ watch(markdown, () => {
 
 // Cloud mode handlers
 async function toggleCloudMode() {
+  // Prevent toggling if AI is not connected
+  if (!isCloudModeAvailable.value) {
+    alert('Cloud mode requires AI Assistant connection. Please wait for connection...');
+    return;
+  }
+  
   const newMode = !isCloudMode.value;
 
   if (newMode && !isAuthenticated.value) {
@@ -586,7 +595,13 @@ onBeforeUnmount(() => {
         @create="() => { createNewFile(); closeMobileMenu(); }" />
 
       <nav class="menu">
-        <button class="button" :class="isCloudMode ? 'filled' : 'outline'" @click="toggleCloudMode" :title="isCloudMode ? 'Switch to Offline Mode' : 'Switch to Cloud Mode'">
+        <button 
+          class="button" 
+          :class="[isCloudMode ? 'filled' : 'outline', { 'disabled': !isCloudModeAvailable }]" 
+          @click="toggleCloudMode" 
+          :disabled="!isCloudModeAvailable"
+          :title="!isCloudModeAvailable ? 'Waiting for AI connection...' : (isCloudMode ? 'Switch to Offline Mode' : 'Switch to Cloud Mode')"
+        >
           <Cloud v-if="!isCloudMode" :size="20" />
           <CloudOff v-else :size="20" />
           <span class="button-text">{{ isCloudMode ? 'Offline' : 'Cloud' }}</span>
@@ -595,7 +610,14 @@ onBeforeUnmount(() => {
           <Share2 :size="20" />
           <span class="button-text">Copy Link</span>
         </button>
-        <button v-if="isCloudMode" class="button outline" @click="openMediaBrowser" title="Media Library">
+        <button 
+          v-if="isCloudMode" 
+          class="button outline" 
+          :class="{ 'disabled': !isCloudModeAvailable }" 
+          @click="openMediaBrowser" 
+          :disabled="!isCloudModeAvailable"
+          title="Media Library"
+        >
           <ImageIcon :size="20" />
           <span class="button-text">Media</span>
         </button>
@@ -863,6 +885,23 @@ onBeforeUnmount(() => {
 .button.active:hover {
   background-color: var(--color-hover);
   border-color: var(--color-hover);
+}
+
+/* Disabled button state */
+.button.disabled,
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.button.filled.disabled,
+.button.filled:disabled {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
 }
 
 /* Dropdown styles */
