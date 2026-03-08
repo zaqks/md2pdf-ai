@@ -1,6 +1,6 @@
 # md2pdf-ai
 
-A modern Markdown to PDF converter that offers live preview, syntax highlighting, PDF export, local storage for file persistence, and an AI assistant to help edit content.
+A modern Markdown to PDF converter with live preview, syntax highlighting, PDF export, cloud storage for easy document sharing, media storage for seamless image and file management, and an AI assistant to help edit content.
 
 <img src="docs/banner.png" width=100%>
 
@@ -13,30 +13,45 @@ md2pdf-ai/
 │   ├── app/                 # Vue.js application
 │   │   ├── src/
 │   │   │   ├── components/
-│   │   │   │   ├── AiAssistant.vue  # AI assistant component
-│   │   │   │   ├── AppBar.vue       # Application bar component
-│   │   │   │   ├── Editor.vue       # CodeMirror markdown editor
-│   │   │   │   ├── FileBrowser.vue  # File browser component
-│   │   │   │   └── Preview.vue  # Markdown preview component
+│   │   │   │   ├── AiAssistant.vue   # AI assistant component
+│   │   │   │   ├── AppBar.vue        # Application bar component
+│   │   │   │   ├── AuthModal.vue     # Authentication modal
+│   │   │   │   ├── CloudBrowser.vue  # Cloud document browser
+│   │   │   │   ├── Editor.vue        # CodeMirror markdown editor
+│   │   │   │   ├── FileBrowser.vue   # Local file browser component
+│   │   │   │   ├── MediaBrowser.vue  # Media storage browser
+│   │   │   │   └── Preview.vue       # Markdown preview component
 │   │   │   ├── composables/
-│   │   │   │   ├── useAiAssistant.js # AI assistant composable
-│   │   │   │   └── useWebSocket.js   # WebSocket composable
+│   │   │   │   ├── useAiAssistant.js   # AI assistant composable
+│   │   │   │   ├── useAuth.js          # Authentication composable
+│   │   │   │   ├── useCloudStorage.js  # Cloud storage composable
+│   │   │   │   └── useWebSocket.js     # WebSocket composable
 │   │   │   ├── pages/
-│   │   │   │   └── Home.vue         # Main application page
+│   │   │   │   └── Home.vue          # Main application page
 │   │   │   ├── styles/
-│   │   │   │   ├── style.css        # Main styles
+│   │   │   │   ├── style.css         # Main styles
 │   │   │   │   └── custom/
 │   │   │   │       ├── macos-frame.css      # macOS-style code block styling
 │   │   │   │       └── markdown-preview.css # Markdown preview styles
 │   │   │   ├── utils/
-│   │   │   │   └── storage.js       # LocalStorage utility
+│   │   │   │   └── storage.js        # LocalStorage utility
 │   │   │   ├── App.vue
 │   │   │   └── main.js
 │   │   └── Dockerfile
 │   └── api/                 # API service
 │       ├── src/
-│       │   ├── app.py       # FastAPI application
-│       │   └── llm.py       # AI model integration
+│       │   ├── routes/
+│       │   │   ├── __init__.py
+│       │   │   ├── auth.py       # Authentication endpoints
+│       │   │   ├── documents.py  # Document CRUD endpoints
+│       │   │   └── media.py      # Media upload/management endpoints
+│       │   ├── app.py            # FastAPI application
+│       │   ├── auth.py           # Authentication logic
+│       │   ├── database.py       # Database connection and models
+│       │   ├── dependencies.py   # Dependency injection
+│       │   ├── llm.py            # AI model integration
+│       │   ├── models.py         # SQLAlchemy models
+│       │   └── schemas.py        # Pydantic schemas
 │       ├── PROMPT.txt       # AI prompt configuration
 │       ├── main.py          # API entry point
 │       ├── requirements.txt # Python dependencies
@@ -51,19 +66,31 @@ md2pdf-ai/
    Example contents:
 
    ```env
+   # AI Configuration
    GROQ_API_KEY=your-groq-api-key
-   GROQ_MODEL=your-model-name
+   GROQ_MODEL=llama-3.3-70b-versatile
+   
+   # API Configuration
    VITE_API_URL=http://localhost:8001
    APP_URL=http://localhost:8000
+   
+   # Database Configuration
+   DATABASE_URL=sqlite:///./md2pdf.db
    ```
 
 2. **Environment Variables**  
    The application reads the following variables from `.env`:
 
+   **AI Configuration:**
    * `GROQ_API_KEY` – Your Groq API key.
-   * `GROQ_MODEL` – The AI model to use for processing.
+   * `GROQ_MODEL` – The AI model to use for processing (default: `llama-3.3-70b-versatile`).
+
+   **API Configuration:**
    * `VITE_API_URL` – Base URL for the FastAPI backend (default `http://localhost:8001`).
    * `APP_URL` – URL where the Vue app is served (default `http://localhost:8000`).
+
+   **Database Configuration:**
+   * `DATABASE_URL` – Database connection string (default: SQLite database).
 
    You can also override these values in `docker-compose.yml` if necessary.
 
