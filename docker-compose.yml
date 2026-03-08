@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: md2pdf
       POSTGRES_PASSWORD: md2pdf_password
-      POSTGRES_DB: md2pdf_db
+      POSTGRES_DB: md2pdf
     ports:
       - 5432:5432
     volumes:
