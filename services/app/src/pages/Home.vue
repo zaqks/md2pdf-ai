@@ -1,11 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, FolderOpen, Image as ImageIcon } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
 import AppBar from '../components/AppBar.vue';
 import FileBrowser from '../components/FileBrowser.vue';
+import AuthModal from '../components/AuthModal.vue';
+import CloudBrowser from '../components/CloudBrowser.vue';
+import MediaBrowser from '../components/MediaBrowser.vue';
 import {
   initializeNewFile,
   getFile,
@@ -17,6 +20,8 @@ import {
   getFileList
 } from '../utils/storage.js';
 import { useAiAssistant } from '../composables/useAiAssistant.js';
+import { useAuth } from '../composables/useAuth.js';
+import { useCloudStorage } from '../composables/useCloudStorage.js';
 
 const markdown = ref('# Hello World !');
 const isDragging = ref(false);
@@ -27,6 +32,15 @@ const currentFileName = ref('');
 const files = ref([]);
 const isMobileMenuOpen = ref(false);
 const activeTab = ref('editor'); // 'editor' or 'preview'
+
+// Cloud mode
+const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl } = useCloudStorage();
+const { isAuthenticated, user, logout: logoutUser, getCurrentUser } = useAuth();
+const showAuthModal = ref(false);
+const showCloudBrowser = ref(false);
+const showMediaBrowser = ref(false);
+const currentDocumentId = ref(null);
+const currentDocumentIsPublic = ref(false);
 
 // AI Assistant
 const {
@@ -84,7 +98,22 @@ function refreshFileList() {
 
 // Autosave function
 function autoSave() {
-  if (currentFileName.value) {
+  if (isCloudMode.value && currentDocumentId.value) {
+    // Debounce cloud saves
+    if (autosaveInterval) {
+      clearTimeout(autosaveInterval);
+    }
+    autosaveInterval = setTimeout(async () => {
+      try {
+        await updateDocument(currentDocumentId.value, {
+          title: currentFileName.value,
+          content: markdown.value
+        });
+      } catch (error) {
+        console.error('Failed to auto-save to cloud:', error);
+      }
+    }, 2000);
+  } else if (currentFileName.value) {
     saveFile(currentFileName.value, markdown.value);
     refreshFileList();
   }
@@ -94,6 +123,119 @@ function autoSave() {
 watch(markdown, () => {
   autoSave();
 });
+
+// Cloud mode handlers
+async function toggleCloudMode() {
+  const newMode = !isCloudMode.value;
+  
+  if (newMode && !isAuthenticated.value) {
+    showAuthModal.value = true;
+    return;
+  }
+  
+  setCloudMode(newMode);
+  
+  if (newMode) {
+    // Switching to cloud mode
+    showCloudBrowser.value = true;
+  } else {
+    // Switching to offline mode
+    currentDocumentId.value = null;
+    loadFile();
+  }
+}
+
+function handleLogin() {
+  showAuthModal.value = true;
+}
+
+function handleLogout() {
+  logoutUser();
+  setCloudMode(false);
+  currentDocumentId.value = null;
+  loadFile();
+}
+
+function handleAuthSuccess() {
+  showAuthModal.value = false;
+  if (!isCloudMode.value) {
+    setCloudMode(true);
+  }
+  showCloudBrowser.value = true;
+}
+
+async function handleSelectCloudDocument(doc) {
+  try {
+    const fullDoc = await getDocument(doc.id);
+    currentFileName.value = fullDoc.title;
+    markdown.value = fullDoc.content;
+    currentDocumentId.value = fullDoc.id;
+    currentDocumentIsPublic.value = fullDoc.is_public;
+    showCloudBrowser.value = false;
+  } catch (error) {
+    alert('Failed to load document: ' + error.message);
+  }
+}
+
+async function handleCreateCloudDocument() {
+  try {
+    const title = prompt('Enter document title:', 'Untitled Document');
+    if (!title) return;
+    
+    const doc = await createDocument(title, '# ' + title + '\n\n');
+    currentFileName.value = doc.title;
+    markdown.value = doc.content;
+    currentDocumentId.value = doc.id;
+    currentDocumentIsPublic.value = doc.is_public;
+    showCloudBrowser.value = false;
+  } catch (error) {
+    alert('Failed to create document: ' + error.message);
+  }
+}
+
+function openCloudBrowser() {
+  if (!isAuthenticated.value) {
+    showAuthModal.value = true;
+    return;
+  }
+  showCloudBrowser.value = true;
+}
+
+function openMediaBrowser() {
+  if (!isAuthenticated.value) {
+    showAuthModal.value = true;
+    return;
+  }
+  showMediaBrowser.value = true;
+}
+
+function handleMediaInsert(markdownText) {
+  markdown.value += '\n' + markdownText + '\n';
+  showMediaBrowser.value = false;
+}
+
+async function handleShareDocument() {
+  if (!currentDocumentId.value) {
+    alert('No cloud document loaded');
+    return;
+  }
+  
+  try {
+    // Toggle public status
+    const newPublicStatus = !currentDocumentIsPublic.value;
+    await updateDocument(currentDocumentId.value, { is_public: newPublicStatus });
+    currentDocumentIsPublic.value = newPublicStatus;
+    
+    if (newPublicStatus) {
+      const shareUrl = getShareUrl(currentDocumentId.value);
+      prompt('Document is now public. Share this URL:', shareUrl);
+    } else {
+      alert('Document is now private');
+    }
+  } catch (error) {
+    alert('Failed to update document: ' + error.message);
+  }
+}
 
 // Select a file
 function selectFile(fileName) {
@@ -337,9 +479,14 @@ function stopDrag() {
 }
 
 // Setup on mount
-onMounted(() => {
+onMounted(async () => {
   loadFile();
   connectAi(); // Connect to AI WebSocket
+  
+  // Try to restore user session if in cloud mode
+  if (isCloudMode.value && isAuthenticated.value) {
+    await getCurrentUser();
+  }
 });
 
 onBeforeUnmount(() => {
@@ -350,6 +497,9 @@ onBeforeUnmount(() => {
   }
   if (previewScrollTimeout) {
     clearTimeout(previewScrollTimeout);
+  }
+  if (autosaveInterval) {
+    clearTimeout(autosaveInterval);
   }
 });
 
@@ -375,6 +525,24 @@ onBeforeUnmount(() => {
         @create="() => { createNewFile(); closeMobileMenu(); }" />
 
       <nav class="menu">
+        <button 
+          v-if="isCloudMode" 
+          class="button outline" 
+          @click="openCloudBrowser" 
+          title="Browse Cloud Documents"
+        >
+          <FolderOpen :size="20" />
+          <span class="button-text">Cloud Files</span>
+        </button>
+        <button 
+          v-if="isCloudMode" 
+          class="button outline" 
+          @click="openMediaBrowser" 
+          title="Media Library"
+        >
+          <ImageIcon :size="20" />
+          <span class="button-text">Media</span>
+        </button>
         <button class="button outline" @click="insertTableOfContents" title="Add Table of Contents">
           <ListPlus :size="20" />
           <span class="button-text">Contents</span>
@@ -400,7 +568,18 @@ onBeforeUnmount(() => {
     </aside>
 
     <div class="content-area">
-      <AppBar :file-name="currentFileName" @rename="handleRenameFile" />
+      <AppBar 
+        :file-name="currentFileName" 
+        :is-cloud-mode="isCloudMode"
+        :is-authenticated="isAuthenticated"
+        :user="user"
+        :can-share="isCloudMode && !!currentDocumentId"
+        @rename="handleRenameFile"
+        @toggle-cloud-mode="toggleCloudMode"
+        @login="handleLogin"
+        @logout="handleLogout"
+        @share="handleShareDocument"
+      />
 
       <!-- Mobile Tab Switcher -->
       <div class="mobile-tabs">
@@ -433,6 +612,24 @@ onBeforeUnmount(() => {
 
     <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()" 
       :hide-on-mobile="isMobileMenuOpen" @submit="handleAiSubmit" @undo="handleAiUndo" />
+    
+    <!-- Modals -->
+    <AuthModal v-if="showAuthModal" @close="showAuthModal = false" @success="handleAuthSuccess" />
+    
+    <div v-if="showCloudBrowser" class="modal-overlay" @click.self="showCloudBrowser = false">
+      <CloudBrowser 
+        @close="showCloudBrowser = false" 
+        @select="handleSelectCloudDocument"
+        @create="handleCreateCloudDocument"
+      />
+    </div>
+    
+    <div v-if="showMediaBrowser" class="modal-overlay" @click.self="showMediaBrowser = false">
+      <MediaBrowser 
+        @close="showMediaBrowser = false"
+        @insert="handleMediaInsert"
+      />
+    </div>
   </div>
 </template>
 
@@ -443,6 +640,19 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: row;
   background-color: var(--color-background);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
 }
 
 .sidebar {

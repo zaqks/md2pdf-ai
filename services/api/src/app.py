@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 import os  # Import os to read environment variables
 from .llm import ask_llm
+from .database import engine, Base
+from .routes import auth, documents, media
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -12,11 +17,22 @@ APP_URL = os.getenv("APP_URL", "http://localhost:8000")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[APP_URL],  # Restrict origins to APP_URL
+    allow_origins=[APP_URL, "http://localhost:8000", "http://localhost:8001"],  # Restrict origins to APP_URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(auth.router)
+app.include_router(documents.router)
+app.include_router(media.router)
+
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
 
 
 @app.websocket("/ws/llm")
