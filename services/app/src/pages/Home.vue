@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2 } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2, ChevronDown } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -38,6 +38,9 @@ const showMediaBrowser = ref(false);
 const currentDocumentId = ref(null);
 const currentDocumentIsPublic = ref(false);
 const cloudDocuments = ref([]);
+
+// Dropdown state
+const isTemplatesDropdownOpen = ref(false);
 
 // AI Assistant
 const {
@@ -477,6 +480,21 @@ function stopDrag() {
   isDragging.value = false;
 }
 
+// Toggle templates dropdown
+function toggleTemplatesDropdown() {
+  isTemplatesDropdownOpen.value = !isTemplatesDropdownOpen.value;
+}
+
+// Close dropdown when clicking outside
+function closeTemplatesDropdown(event) {
+  if (isTemplatesDropdownOpen.value) {
+    const dropdown = event.target.closest('.dropdown-container');
+    if (!dropdown) {
+      isTemplatesDropdownOpen.value = false;
+    }
+  }
+}
+
 // Setup on mount
 onMounted(async () => {
   if (isCloudMode.value) {
@@ -492,10 +510,16 @@ onMounted(async () => {
   }
   
   connectAi(); // Connect to AI WebSocket
+  
+  // Add click listener to close dropdown when clicking outside
+  document.addEventListener('click', closeTemplatesDropdown);
 });
 
 onBeforeUnmount(() => {
   disconnectAi(); // Disconnect AI WebSocket
+  
+  // Remove click listener
+  document.removeEventListener('click', closeTemplatesDropdown);
 
   if (editorScrollTimeout) {
     clearTimeout(editorScrollTimeout);
@@ -549,18 +573,27 @@ onBeforeUnmount(() => {
           <ImageIcon :size="20" />
           <span class="button-text">Media</span>
         </button>
-        <button class="button outline" @click="insertTableOfContents" title="Add Table of Contents">
-          <ListPlus :size="20" />
-          <span class="button-text">Contents</span>
-        </button>
-        <button class="button outline" @click="insertTable" title="Add Table">
-          <Table2 :size="20" />
-          <span class="button-text">Table</span>
-        </button>
-        <button class="button outline" @click="insertImage" title="Add Image">
-          <ImagePlus :size="20" />
-          <span class="button-text">Image</span>
-        </button>
+        <div class="dropdown-container">
+          <button class="button outline" @click="toggleTemplatesDropdown" title="Insert Template">
+            <ListPlus :size="20" />
+            <span class="button-text">Insert</span>
+            <ChevronDown :size="16" class="dropdown-icon" :class="{ rotated: isTemplatesDropdownOpen }" />
+          </button>
+          <div v-if="isTemplatesDropdownOpen" class="dropdown-menu">
+            <button class="dropdown-item" @click="insertTableOfContents">
+              <ListPlus :size="18" />
+              <span>Table of Contents</span>
+            </button>
+            <button class="dropdown-item" @click="insertTable">
+              <Table2 :size="18" />
+              <span>Table</span>
+            </button>
+            <button class="dropdown-item" @click="insertImage">
+              <ImagePlus :size="18" />
+              <span>Image</span>
+            </button>
+          </div>
+        </div>
         <button class="button outline" @click="$refs.fileInput.click()" title="Import File">
           <FileUp :size="20" />
           <span class="button-text">Import</span>
@@ -804,6 +837,84 @@ onBeforeUnmount(() => {
 .button.active:hover {
   background-color: var(--color-hover);
   border-color: var(--color-hover);
+}
+
+/* Dropdown styles */
+.dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+  margin-left: auto;
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar:hover .dropdown-icon {
+  opacity: 1;
+  width: auto;
+}
+
+.dropdown-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + var(--spacing-xs));
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--spacing-s);
+  padding: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 200px;
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-m);
+  padding: var(--spacing-s) var(--spacing-m);
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-s);
+  font-weight: 500;
+  font-family: var(--font-family);
+  cursor: pointer;
+  border-radius: var(--spacing-xs);
+  transition: var(--transition);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  transform: translateY(-1px);
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
 }
 
 .content-area {
@@ -1054,6 +1165,19 @@ onBeforeUnmount(() => {
   .button-text {
     opacity: 1;
     width: auto;
+  }
+
+  .dropdown-icon {
+    opacity: 1;
+    width: auto;
+  }
+
+  .dropdown-menu {
+    position: static;
+    margin-left: 0;
+    margin-top: var(--spacing-xs);
+    width: 100%;
+    animation: none;
   }
 
   .content-area {
