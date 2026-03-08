@@ -151,12 +151,29 @@ async function toggleCloudMode() {
 
   if (newMode) {
     // Switching to cloud mode
+    currentDocumentId.value = null;
     await refreshFileList();
+    
+    // Auto-open first document or create new one
+    if (files.value.length > 0) {
+      await selectFile(files.value[0]);
+    } else {
+      await createNewFile();
+    }
   } else {
     // Switching to offline mode
     currentDocumentId.value = null;
-    loadFile();
-    refreshFileList();
+    await refreshFileList();
+    
+    // Auto-open first file or create new one
+    if (files.value.length > 0) {
+      selectFile(files.value[0].name);
+    } else {
+      const newFile = initializeNewFile();
+      currentFileName.value = newFile.fileName;
+      markdown.value = newFile.content;
+      refreshFileList();
+    }
   }
 }
 
