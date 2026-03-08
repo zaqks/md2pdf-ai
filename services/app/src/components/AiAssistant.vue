@@ -249,7 +249,7 @@ function autoResize(event) {
 
 @media (max-width: 768px) {
   .ai-assistant {
-    bottom: var(--spacing-m);
+    bottom: var(--spacing-l);
     right: var(--spacing-m);
     left: var(--spacing-m);
   }
@@ -260,13 +260,16 @@ function autoResize(event) {
 
   .ai-container {
     width: 100%;
-    padding: var(--spacing-s) var(--spacing-s) var(--spacing-s) var(--spacing-m);
+    padding: var(--spacing-m);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .ai-input {
     flex: 1;
     width: auto;
     font-size: var(--font-size-m);
+    padding: var(--spacing-s) var(--spacing-m);
   }
 
   .ai-assistant.expanded .ai-input {
@@ -274,13 +277,13 @@ function autoResize(event) {
   }
 
   .ai-button {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
   }
 
   .status-indicator {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 }
 </style>

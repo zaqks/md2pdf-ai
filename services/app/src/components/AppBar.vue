@@ -260,9 +260,11 @@ function handleKeydown(event) {
 
 @media (max-width: 768px) {
   .app-bar {
-    padding: var(--spacing-s) var(--spacing-m);
-    padding-left: 64px;
+    padding: var(--spacing-m) var(--spacing-m);
+    padding-left: 72px;
     /* Account for hamburger menu */
+    height: 56px;
+    gap: var(--spacing-s);
   }
 
   .mode-text {
@@ -274,25 +276,33 @@ function handleKeydown(event) {
   }
 
   .file-name {
-    font-size: var(--font-size-s);
-    max-width: 150px;
+    font-size: var(--font-size-m);
+    max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .file-name-input {
-    min-width: 120px;
-    font-size: var(--font-size-s);
+    min-width: 150px;
+    font-size: var(--font-size-m);
+    padding: var(--spacing-s) var(--spacing-m);
   }
 
   .icon-button {
     padding: var(--spacing-s);
+    min-width: 36px;
+    min-height: 36px;
   }
 
   .left-section,
   .right-section {
     min-width: auto;
+    gap: var(--spacing-s);
+  }
+  
+  .user-info {
+    padding: var(--spacing-xs) var(--spacing-s);
   }
 }
 </style>

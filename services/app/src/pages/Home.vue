@@ -216,11 +216,11 @@ async function selectFile(fileOrName) {
 // Create new file
 async function createNewFile() {
   if (isCloudMode.value) {
-    // Cloud document
+    // Cloud document - auto-generate title like offline mode
     try {
-      const title = prompt('Enter document title:', 'Untitled Document');
-      if (!title) return;
-
+      const timestamp = new Date().getTime();
+      const title = `Document ${timestamp}`;
+      
       const doc = await createDocument(title, '# ' + title + '\n\n');
       currentFileName.value = doc.title;
       markdown.value = doc.content;
@@ -504,6 +504,15 @@ onMounted(async () => {
     }
     await getCurrentUser();
     await refreshFileList();
+    
+    // Auto-open latest document or create new one if no documents exist
+    if (files.value.length > 0) {
+      // Open the latest document (most recently updated)
+      await selectFile(files.value[0]);
+    } else {
+      // No documents exist, create a new one automatically
+      await createNewFile();
+    }
   } else {
     // In offline mode - load local file
     loadFile();
@@ -1042,18 +1051,19 @@ onBeforeUnmount(() => {
   background-color: var(--color-primary);
   color: var(--color-background);
   border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
+  border-radius: 12px;
+  width: 52px;
+  height: 52px;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mobile-menu-toggle:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-menu-toggle.hidden {
@@ -1073,29 +1083,31 @@ onBeforeUnmount(() => {
   display: none;
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
-  padding: var(--spacing-xs);
-  gap: var(--spacing-xs);
+  padding: var(--spacing-s);
+  gap: var(--spacing-s);
 }
 
 .tab-button {
   flex: 1;
-  padding: var(--spacing-m);
+  padding: var(--spacing-l);
   border: none;
   background-color: transparent;
   color: var(--color-text-secondary);
   font-size: var(--font-size-m);
-  font-weight: 500;
+  font-weight: 600;
   font-family: var(--font-family);
   cursor: pointer;
-  border-radius: var(--spacing-s);
-  transition: var(--transition);
+  border-radius: 8px;
+  transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  min-height: 48px;
 }
 
 .tab-button.active {
   background-color: var(--color-primary);
   color: var(--color-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
@@ -1115,15 +1127,16 @@ onBeforeUnmount(() => {
     position: fixed;
     left: -100%;
     top: 0;
-    width: 80%;
-    max-width: 320px;
+    width: 85%;
+    max-width: 340px;
     height: 100vh;
     z-index: 100;
     background-color: var(--color-background);
     border-right: 1px solid var(--color-border);
-    padding: var(--spacing-l);
-    transition: left 0.3s ease;
+    padding: var(--spacing-xl);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   }
 
   .sidebar.mobile-open {
@@ -1131,20 +1144,21 @@ onBeforeUnmount(() => {
   }
 
   .sidebar:hover {
-    width: 80%;
-    max-width: 320px;
+    width: 85%;
+    max-width: 340px;
   }
 
   .logo {
     opacity: 1;
-    margin-bottom: var(--spacing-l);
-    padding: 0 var(--spacing-l);
+    margin-bottom: var(--spacing-xl);
+    padding: 0;
     justify-content: flex-start;
   }
 
   .logo-text {
     opacity: 1;
     width: auto;
+    font-size: 1.25rem;
   }
 
   .sidebar :deep(.file-browser) {
@@ -1153,13 +1167,15 @@ onBeforeUnmount(() => {
   }
 
   .menu {
-    padding: 0 0 var(--spacing-l) 0;
+    padding: 0 0 var(--spacing-xl) 0;
   }
 
   .button {
     justify-content: flex-start;
     gap: var(--spacing-m);
-    padding: var(--spacing-m);
+    padding: var(--spacing-m) var(--spacing-l);
+    min-height: 48px;
+    font-size: var(--font-size-m);
   }
 
   .button-text {
@@ -1211,7 +1227,7 @@ onBeforeUnmount(() => {
   .preview-container {
     flex: 1;
     min-height: 0;
-    padding-bottom: 80px;
+    padding-bottom: 100px;
     /* Space for AI input */
   }
 
@@ -1221,9 +1237,15 @@ onBeforeUnmount(() => {
   }
 
   .preview-container {
-    padding: var(--spacing-l);
-    padding-bottom: 100px;
+    padding: var(--spacing-xl);
+    padding-bottom: 120px;
     /* Space for AI input */
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .editor-container {
+    padding: var(--spacing-m);
   }
 
   #app {
