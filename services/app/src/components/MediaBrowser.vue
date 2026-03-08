@@ -2,7 +2,9 @@
   <div class="media-browser">
     <div class="media-header">
       <h3>Media Library</h3>
-      <button @click="$emit('close')" class="close-btn">&times;</button>
+      <button @click="$emit('close')" class="close-btn">
+        <X :size="20" />
+      </button>
     </div>
     
     <div class="media-body">
@@ -15,7 +17,8 @@
           style="display: none"
         />
         <button @click="$refs.fileInput.click()" class="upload-btn">
-          📤 Upload Image
+          <Upload :size="18" />
+          <span>Upload Image</span>
         </button>
       </div>
       
@@ -44,13 +47,13 @@
             </div>
             <div class="media-actions">
               <button @click="copyUrl(media)" class="action-btn" title="Copy URL">
-                📋
+                <Copy :size="14" />
               </button>
               <button @click="insertMarkdown(media)" class="action-btn" title="Insert Markdown">
-                ✏️
+                <Code :size="14" />
               </button>
               <button @click="deleteMedia(media)" class="action-btn delete" title="Delete">
-                🗑️
+                <Trash2 :size="14" />
               </button>
             </div>
           </div>
@@ -62,6 +65,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { X, Upload, Copy, Code, Trash2 } from 'lucide-vue-next';
 import { useCloudStorage } from '../composables/useCloudStorage.js';
 
 const emit = defineEmits(['close', 'insert']);
@@ -137,72 +141,77 @@ onMounted(() => {
 
 <style scoped>
 .media-browser {
-  background: white;
-  border-radius: 12px;
+  background: var(--color-surface);
+  border-radius: 8px;
   width: 90%;
   max-width: 800px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-border);
 }
 
 .media-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: var(--spacing-l);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .media-header h3 {
   margin: 0;
-  font-size: 20px;
-  color: #111827;
+  font-size: var(--font-size-l);
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 32px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  padding: var(--spacing-xs);
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: var(--transition);
 }
 
 .close-btn:hover {
-  color: #111827;
+  background: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 .media-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: var(--spacing-l);
 }
 
 .upload-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-l);
 }
 
 .upload-btn {
-  padding: 10px 20px;
-  background: #3b82f6;
+  padding: var(--spacing-m);
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--font-size-m);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-s);
 }
 
 .upload-btn:hover {
-  background: #2563eb;
+  background: var(--color-primary-dark);
 }
 
 .uploading,
@@ -210,37 +219,39 @@ onMounted(() => {
 .error,
 .empty {
   text-align: center;
-  padding: 40px 20px;
-  color: #6b7280;
+  padding: var(--spacing-xl) var(--spacing-l);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-m);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--color-error, #dc2626);
 }
 
 .media-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+  gap: var(--spacing-m);
 }
 
 .media-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: var(--transition);
+  background: var(--color-background);
 }
 
 .media-item:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .media-preview {
   width: 100%;
   height: 150px;
   overflow: hidden;
-  background: #f3f4f6;
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -253,13 +264,13 @@ onMounted(() => {
 }
 
 .media-info {
-  padding: 12px;
+  padding: var(--spacing-m);
 }
 
 .media-name {
-  font-size: 12px;
-  color: #374151;
-  margin-bottom: 8px;
+  font-size: var(--font-size-s);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-s);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -267,25 +278,31 @@ onMounted(() => {
 
 .media-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-s);
 }
 
 .action-btn {
   flex: 1;
-  padding: 6px;
-  background: #f3f4f6;
-  border: none;
+  padding: var(--spacing-s);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
-  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: var(--transition);
 }
 
 .action-btn:hover {
-  background: #e5e7eb;
+  background: var(--color-background);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .action-btn.delete:hover {
-  background: #fee2e2;
+  border-color: var(--color-error, #dc2626);
+  color: var(--color-error, #dc2626);
 }
 </style>

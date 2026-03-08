@@ -2,7 +2,9 @@
   <div class="cloud-browser">
     <div class="cloud-header">
       <h3>Cloud Documents</h3>
-      <button @click="$emit('close')" class="close-btn">&times;</button>
+      <button @click="$emit('close')" class="close-btn">
+        <X :size="20" />
+      </button>
     </div>
     
     <div class="cloud-body">
@@ -22,10 +24,16 @@
           @click="selectDocument(doc)"
         >
           <div class="document-info">
-            <div class="document-title">{{ doc.title }}</div>
+            <div class="document-title">
+              <FileText :size="16" />
+              {{ doc.title }}
+            </div>
             <div class="document-meta">
               {{ formatDate(doc.updated_at || doc.created_at) }}
-              <span v-if="doc.is_public" class="public-badge">Public</span>
+              <span v-if="doc.is_public" class="public-badge">
+                <Globe :size="12" />
+                Public
+              </span>
             </div>
           </div>
           <button
@@ -33,7 +41,7 @@
             class="delete-btn"
             title="Delete"
           >
-            🗑️
+            <Trash2 :size="16" />
           </button>
         </div>
       </div>
@@ -41,7 +49,8 @@
     
     <div class="cloud-footer">
       <button @click="createNew" class="create-btn">
-        Create New Document
+        <Plus :size="18" />
+        <span>Create New Document</span>
       </button>
     </div>
   </div>
@@ -49,6 +58,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { X, FileText, Globe, Trash2, Plus } from 'lucide-vue-next';
 import { useCloudStorage } from '../composables/useCloudStorage.js';
 
 const emit = defineEmits(['close', 'select', 'create']);
@@ -105,147 +115,169 @@ onMounted(() => {
 
 <style scoped>
 .cloud-browser {
-  background: white;
-  border-radius: 12px;
+  background: var(--color-surface);
+  border-radius: 8px;
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-border);
 }
 
 .cloud-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: var(--spacing-l);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .cloud-header h3 {
   margin: 0;
-  font-size: 20px;
-  color: #111827;
+  font-size: var(--font-size-l);
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 32px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  padding: var(--spacing-xs);
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 4px;
+  transition: var(--transition);
 }
 
 .close-btn:hover {
-  color: #111827;
+  background: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 .cloud-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: var(--spacing-l);
 }
 
 .loading,
 .error,
 .empty {
   text-align: center;
-  padding: 40px 20px;
-  color: #6b7280;
+  padding: var(--spacing-xl) var(--spacing-l);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-m);
 }
 
 .error {
-  color: #dc2626;
+  color: var(--color-error, #dc2626);
 }
 
 .documents-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-s);
 }
 
 .document-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: var(--spacing-m);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition);
+  background: var(--color-background);
 }
 
 .document-item:hover {
-  background: #f9fafb;
-  border-color: #3b82f6;
+  background: var(--color-surface);
+  border-color: var(--color-primary);
 }
 
 .document-info {
   flex: 1;
+  min-width: 0;
 }
 
 .document-title {
   font-weight: 500;
-  color: #111827;
-  margin-bottom: 4px;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-s);
+  font-size: var(--font-size-m);
 }
 
 .document-meta {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: var(--font-size-s);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-s);
 }
 
 .public-badge {
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  padding: 2px var(--spacing-s);
   border-radius: 4px;
   font-weight: 500;
+  font-size: var(--font-size-xs);
+  border: 1px solid var(--color-border);
 }
 
 .delete-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 18px;
-  padding: 4px 8px;
-  opacity: 0.6;
-  transition: opacity 0.2s;
+  padding: var(--spacing-s);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  transition: var(--transition);
 }
 
 .delete-btn:hover {
-  opacity: 1;
+  background: var(--color-background);
+  color: var(--color-error, #dc2626);
 }
 
 .cloud-footer {
-  padding: 20px;
-  border-top: 1px solid #e5e7eb;
+  padding: var(--spacing-l);
+  border-top: 1px solid var(--color-border);
 }
 
 .create-btn {
   width: 100%;
-  padding: 12px;
-  background: #3b82f6;
+  padding: var(--spacing-m);
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: var(--font-size-m);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-s);
 }
 
 .create-btn:hover {
-  background: #2563eb;
+  background: var(--color-primary-dark);
 }
 </style>
