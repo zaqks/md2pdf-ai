@@ -24,6 +24,11 @@ const props = defineProps({
 const emit = defineEmits(['select', 'delete', 'create']);
 
 function formatDate(timestamp) {
+  // Handle invalid or missing timestamps
+  if (!timestamp || timestamp === 0) {
+    return 'Unknown date';
+  }
+  
   const date = new Date(timestamp);
   const now = new Date();
   const diffInMinutes = Math.floor((now - date) / (1000 * 60));

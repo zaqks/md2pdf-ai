@@ -157,9 +157,11 @@ This is a paragraph that appears after a horizontal rule.
 
 export function getFileList() {
   const files = getAllFiles();
+  const now = new Date().getTime();
+  
   return Object.entries(files).map(([name, data]) => ({
     name,
-    lastModified: data.lastModified,
-    created: data.created
+    lastModified: data.lastModified || now,
+    created: data.created || now
   })).sort((a, b) => b.lastModified - a.lastModified);
 }
