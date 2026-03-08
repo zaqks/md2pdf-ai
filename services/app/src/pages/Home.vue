@@ -1,12 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, FolderOpen, Image as ImageIcon, Cloud, CloudOff, Share2 } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2 } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
 import AppBar from '../components/AppBar.vue';
 import FileBrowser from '../components/FileBrowser.vue';
-import CloudBrowser from '../components/CloudBrowser.vue';
 import MediaBrowser from '../components/MediaBrowser.vue';
 import {
   initializeNewFile,
@@ -33,12 +32,12 @@ const isMobileMenuOpen = ref(false);
 const activeTab = ref('editor'); // 'editor' or 'preview'
 
 // Cloud mode
-const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl } = useCloudStorage();
+const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl, getDocuments, deleteDocument } = useCloudStorage();
 const { isAuthenticated, user, logout: logoutUser, getCurrentUser, getOrCreateUser } = useAuth();
-const showCloudBrowser = ref(false);
 const showMediaBrowser = ref(false);
 const currentDocumentId = ref(null);
 const currentDocumentIsPublic = ref(false);
+const cloudDocuments = ref([]);
 
 // AI Assistant
 const {
@@ -90,8 +89,18 @@ function loadFile() {
 }
 
 // Refresh file list
-function refreshFileList() {
-  files.value = getFileList();
+async function refreshFileList() {
+  if (isCloudMode.value) {
+    try {
+      cloudDocuments.value = await getDocuments();
+      files.value = cloudDocuments.value;
+    } catch (error) {
+      console.error('Failed to load cloud documents:', error);
+      files.value = [];
+    }
+  } else {
+    files.value = getFileList();
+  }
 }
 
 // Autosave function
@@ -139,11 +148,12 @@ async function toggleCloudMode() {
 
   if (newMode) {
     // Switching to cloud mode
-    showCloudBrowser.value = true;
+    await refreshFileList();
   } else {
     // Switching to offline mode
     currentDocumentId.value = null;
     loadFile();
+    refreshFileList();
   }
 }
 
@@ -161,42 +171,7 @@ async function copyShareLink() {
   }
 }
 
-async function handleSelectCloudDocument(doc) {
-  try {
-    const fullDoc = await getDocument(doc.id);
-    currentFileName.value = fullDoc.title;
-    markdown.value = fullDoc.content;
-    currentDocumentId.value = fullDoc.id;
-    currentDocumentIsPublic.value = fullDoc.is_public;
-    showCloudBrowser.value = false;
-  } catch (error) {
-    alert('Failed to load document: ' + error.message);
-  }
-}
 
-async function handleCreateCloudDocument() {
-  try {
-    const title = prompt('Enter document title:', 'Untitled Document');
-    if (!title) return;
-
-    const doc = await createDocument(title, '# ' + title + '\n\n');
-    currentFileName.value = doc.title;
-    markdown.value = doc.content;
-    currentDocumentId.value = doc.id;
-    currentDocumentIsPublic.value = doc.is_public;
-    showCloudBrowser.value = false;
-  } catch (error) {
-    alert('Failed to create document: ' + error.message);
-  }
-}
-
-function openCloudBrowser() {
-  if (!isAuthenticated.value) {
-    toggleCloudMode();
-    return;
-  }
-  showCloudBrowser.value = true;
-}
 
 function openMediaBrowser() {
   if (!isAuthenticated.value) {
@@ -212,37 +187,87 @@ function handleMediaInsert(markdownText) {
 }
 
 // Select a file
-function selectFile(fileName) {
-  const fileData = getFile(fileName);
-  if (fileData) {
-    currentFileName.value = fileName;
-    markdown.value = fileData.content;
-    setCurrentFileName(fileName);
+async function selectFile(fileOrName) {
+  if (isCloudMode.value) {
+    // Cloud document
+    try {
+      const fullDoc = await getDocument(fileOrName.id);
+      currentFileName.value = fullDoc.title;
+      markdown.value = fullDoc.content;
+      currentDocumentId.value = fullDoc.id;
+      currentDocumentIsPublic.value = fullDoc.is_public;
+    } catch (error) {
+      alert('Failed to load document: ' + error.message);
+    }
+  } else {
+    // Offline file
+    const fileData = getFile(fileOrName);
+    if (fileData) {
+      currentFileName.value = fileOrName;
+      markdown.value = fileData.content;
+      setCurrentFileName(fileOrName);
+    }
   }
 }
 
 // Create new file
-function createNewFile() {
-  const newFile = initializeNewFile();
-  currentFileName.value = newFile.fileName;
-  markdown.value = newFile.content;
-  refreshFileList();
+async function createNewFile() {
+  if (isCloudMode.value) {
+    // Cloud document
+    try {
+      const title = prompt('Enter document title:', 'Untitled Document');
+      if (!title) return;
+
+      const doc = await createDocument(title, '# ' + title + '\n\n');
+      currentFileName.value = doc.title;
+      markdown.value = doc.content;
+      currentDocumentId.value = doc.id;
+      currentDocumentIsPublic.value = doc.is_public;
+      await refreshFileList();
+    } catch (error) {
+      alert('Failed to create document: ' + error.message);
+    }
+  } else {
+    // Offline file
+    const newFile = initializeNewFile();
+    currentFileName.value = newFile.fileName;
+    markdown.value = newFile.content;
+    refreshFileList();
+  }
 }
 
 // Delete file
-function handleDeleteFile(fileName) {
-  deleteFile(fileName);
-  refreshFileList();
-
-  // If we deleted the current file, switch to another file or create new one
-  if (fileName === currentFileName.value) {
-    // Check if there are any remaining files
-    if (files.value.length > 0) {
-      // Open the most recently modified file
-      selectFile(files.value[0].name);
-    } else {
-      // No files left, create a new one
-      createNewFile();
+async function handleDeleteFile(fileOrName) {
+  if (isCloudMode.value) {
+    // Cloud document
+    try {
+      await deleteDocument(fileOrName.id);
+      await refreshFileList();
+      
+      // If deleted document was active, clear or load another
+      if (currentDocumentId.value === fileOrName.id) {
+        if (files.value.length > 0) {
+          await selectFile(files.value[0]);
+        } else {
+          await createNewFile();
+        }
+      }
+    } catch (error) {
+      alert('Failed to delete document: ' + error.message);
+    }
+  } else {
+    // Offline file
+    deleteFile(fileOrName);
+    refreshFileList();
+    
+    // If deleted file was active, load another file or create new one
+    if (currentFileName.value === fileOrName) {
+      const remainingFiles = getFileList();
+      if (remainingFiles.length > 0) {
+        selectFile(remainingFiles[0].name);
+      } else {
+        createNewFile();
+      }
     }
   }
 }
@@ -454,13 +479,19 @@ function stopDrag() {
 
 // Setup on mount
 onMounted(async () => {
-  loadFile();
-  connectAi(); // Connect to AI WebSocket
-
-  // Try to restore user session if in cloud mode
-  if (isCloudMode.value && isAuthenticated.value) {
+  if (isCloudMode.value) {
+    // In cloud mode - load cloud documents
+    if (!isAuthenticated.value) {
+      await getOrCreateUser();
+    }
     await getCurrentUser();
+    await refreshFileList();
+  } else {
+    // In offline mode - load local file
+    loadFile();
   }
+  
+  connectAi(); // Connect to AI WebSocket
 });
 
 onBeforeUnmount(() => {
@@ -495,8 +526,13 @@ onBeforeUnmount(() => {
         <span class="logo-text">md2pdf-AI</span>
       </div>
 
-      <FileBrowser :files="files" :current-file-name="currentFileName"
-        @select="(name) => { selectFile(name); closeMobileMenu(); }" @delete="handleDeleteFile"
+      <FileBrowser 
+        :files="files" 
+        :current-file-name="currentFileName"
+        :is-cloud-mode="isCloudMode"
+        :current-document-id="currentDocumentId"
+        @select="(file) => { selectFile(file); closeMobileMenu(); }" 
+        @delete="handleDeleteFile"
         @create="() => { createNewFile(); closeMobileMenu(); }" />
 
       <nav class="menu">
@@ -508,10 +544,6 @@ onBeforeUnmount(() => {
         <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
           <Share2 :size="20" />
           <span class="button-text">Copy Link</span>
-        </button>
-        <button v-if="isCloudMode" class="button outline" @click="openCloudBrowser" title="Browse Cloud Documents">
-          <FolderOpen :size="20" />
-          <span class="button-text">Cloud Files</span>
         </button>
         <button v-if="isCloudMode" class="button outline" @click="openMediaBrowser" title="Media Library">
           <ImageIcon :size="20" />
@@ -573,11 +605,6 @@ onBeforeUnmount(() => {
       :hide-on-mobile="isMobileMenuOpen" @submit="handleAiSubmit" @undo="handleAiUndo" />
 
     <!-- Modals -->
-    <div v-if="showCloudBrowser" class="modal-overlay" @click.self="showCloudBrowser = false">
-      <CloudBrowser @close="showCloudBrowser = false" @select="handleSelectCloudDocument"
-        @create="handleCreateCloudDocument" />
-    </div>
-
     <div v-if="showMediaBrowser" class="modal-overlay" @click.self="showMediaBrowser = false">
       <MediaBrowser @close="showMediaBrowser = false" @insert="handleMediaInsert" />
     </div>

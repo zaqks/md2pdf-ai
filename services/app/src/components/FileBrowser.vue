@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { File, Trash2, FilePlus } from 'lucide-vue-next';
+import { File, Trash2, FilePlus, Globe } from 'lucide-vue-next';
 
 const props = defineProps({
   files: {
@@ -10,6 +10,14 @@ const props = defineProps({
   currentFileName: {
     type: String,
     required: true
+  },
+  isCloudMode: {
+    type: Boolean,
+    default: false
+  },
+  currentDocumentId: {
+    type: String,
+    default: null
   }
 });
 
@@ -32,10 +40,11 @@ function formatDate(timestamp) {
   return date.toLocaleDateString();
 }
 
-function handleDelete(fileName, event) {
+function handleDelete(file, event) {
   event.stopPropagation();
-  if (confirm(`Delete "${fileName}"?`)) {
-    emit('delete', fileName);
+  const name = props.isCloudMode ? file.title : file;
+  if (confirm(`Delete "${name}"?`)) {
+    emit('delete', file);
   }
 }
 </script>
@@ -43,14 +52,41 @@ function handleDelete(fileName, event) {
 <template>
   <div class="file-browser">
     <div class="file-browser-header">
-      <h3 class="browser-title">Files</h3>
+      <h3 class="browser-title">{{ isCloudMode ? 'Cloud Files' : 'Files' }}</h3>
       <button @click="emit('create')" class="new-file-button" title="New File">
         <FilePlus :size="18" />
       </button>
     </div>
     
     <div class="file-list">
+      <!-- Cloud files -->
       <div
+        v-if="isCloudMode"
+        v-for="file in files"
+        :key="file.id"
+        class="file-item"
+        :class="{ active: file.id === currentDocumentId }"
+        @click="emit('select', file)"
+      >
+        <div class="file-item-content">
+          <File :size="16" class="file-icon" />
+          <div class="file-info">
+            <span class="file-name">{{ file.title }}</span>
+            <span class="file-date">{{ formatDate(file.updated_at) }}</span>
+          </div>
+        </div>
+        <button
+          @click="(e) => handleDelete(file, e)"
+          class="delete-button"
+          title="Delete"
+        >
+          <Trash2 :size="14" />
+        </button>
+      </div>
+
+      <!-- Offline files -->
+      <div
+        v-if="!isCloudMode"
         v-for="file in files"
         :key="file.name"
         class="file-item"
@@ -74,7 +110,7 @@ function handleDelete(fileName, event) {
       </div>
       
       <div v-if="files.length === 0" class="empty-state">
-        No files yet. Create one!
+        {{ isCloudMode ? 'No cloud documents yet. Create one!' : 'No files yet. Create one!' }}
       </div>
     </div>
   </div>
