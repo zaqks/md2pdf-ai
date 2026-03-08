@@ -17,10 +17,11 @@ APP_URL = os.getenv("APP_URL", "http://localhost:8000")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[APP_URL, "http://localhost:8000", "http://localhost:8001"],  # Restrict origins to APP_URL
+    allow_origins=["*"],  # Allow all origins for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
