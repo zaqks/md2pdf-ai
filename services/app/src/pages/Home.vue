@@ -544,7 +544,7 @@ onBeforeUnmount(() => {
     <!-- Mobile Overlay -->
     <div v-if="isMobileMenuOpen" class="mobile-overlay" @click="closeMobileMenu"></div>
 
-    <aside class="sidebar" :class="{ 'mobile-open': isMobileMenuOpen }">
+    <aside class="sidebar" :class="{ 'mobile-open': isMobileMenuOpen }" @mouseleave="isTemplatesDropdownOpen = false">
       <div class="logo">
         <img src="/logo.svg" alt="md2pdf-AI" class="logo-img" />
         <span class="logo-text">md2pdf-AI</span>
