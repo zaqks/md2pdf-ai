@@ -21,7 +21,7 @@ async def create_document(
         user_id=current_user.id,
         title=document_data.title,
         content=document_data.content,
-        is_public=1 if document_data.is_public else 0
+        is_public=1  # Always public
     )
     
     db.add(new_document)
@@ -110,8 +110,7 @@ async def update_document(
         document.title = document_data.title
     if document_data.content is not None:
         document.content = document_data.content
-    if document_data.is_public is not None:
-        document.is_public = 1 if document_data.is_public else 0
+    # is_public is always 1, no need to update
     
     db.commit()
     db.refresh(document)

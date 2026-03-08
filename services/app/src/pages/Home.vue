@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, FolderOpen, Image as ImageIcon } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, FolderOpen, Image as ImageIcon, Cloud, CloudOff, Share2 } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -147,11 +147,18 @@ async function toggleCloudMode() {
   }
 }
 
-function handleLogout() {
-  logoutUser();
-  setCloudMode(false);
-  currentDocumentId.value = null;
-  loadFile();
+async function copyShareLink() {
+  if (!currentDocumentId.value) {
+    return;
+  }
+  
+  try {
+    const shareUrl = getShareUrl(currentDocumentId.value);
+    await navigator.clipboard.writeText(shareUrl);
+    alert('Share link copied to clipboard!');
+  } catch (error) {
+    alert('Failed to copy link: ' + error.message);
+  }
 }
 
 async function handleSelectCloudDocument(doc) {
@@ -202,29 +209,6 @@ function openMediaBrowser() {
 function handleMediaInsert(markdownText) {
   markdown.value += '\n' + markdownText + '\n';
   showMediaBrowser.value = false;
-}
-
-async function handleShareDocument() {
-  if (!currentDocumentId.value) {
-    alert('No cloud document loaded');
-    return;
-  }
-
-  try {
-    // Toggle public status
-    const newPublicStatus = !currentDocumentIsPublic.value;
-    await updateDocument(currentDocumentId.value, { is_public: newPublicStatus });
-    currentDocumentIsPublic.value = newPublicStatus;
-
-    if (newPublicStatus) {
-      const shareUrl = getShareUrl(currentDocumentId.value);
-      prompt('Document is now public. Share this URL:', shareUrl);
-    } else {
-      alert('Document is now private');
-    }
-  } catch (error) {
-    alert('Failed to update document: ' + error.message);
-  }
 }
 
 // Select a file
@@ -551,17 +535,11 @@ onBeforeUnmount(() => {
     <div class="content-area">
       <AppBar 
         :file-name="currentFileName" 
-        :is-cloud-mode="isCloudMode" 
+        :is-cloud-mode="isCloudMode"
         :is-authenticated="isAuthenticated"
-        :user="user" 
-        :can-share="isCloudMode && !!currentDocumentId" 
+        :user="user"
         @rename="handleRenameFile"
-        @toggle-cloud-mode="toggleCloudMode" 
-        @logout="handleLogout" 
-        @share="handleShareDocument" 
-      />
-      
-      <!-- Mobile Tab Switcher -->
+      />      <!-- Mobile Tab Switcher -->
       <div class="mobile-tabs">
         <button class="tab-button" :class="{ active: activeTab === 'editor' }" @click="switchTab('editor')">
           Editor
@@ -779,6 +757,17 @@ onBeforeUnmount(() => {
   background-color: var(--color-hover);
   border-color: var(--color-hover);
   transform: translateY(-1px);
+}
+
+.button.active {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  border-color: var(--color-primary);
+}
+
+.button.active:hover {
+  background-color: var(--color-hover);
+  border-color: var(--color-hover);
 }
 
 .content-area {

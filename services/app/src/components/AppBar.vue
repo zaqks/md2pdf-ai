@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { Check, X, Pencil, Cloud, CloudOff, User, LogOut, Share2 } from 'lucide-vue-next';
+import { Check, X, Pencil, User } from 'lucide-vue-next';
 
 const props = defineProps({
   fileName: {
@@ -18,14 +18,10 @@ const props = defineProps({
   user: {
     type: Object,
     default: null
-  },
-  canShare: {
-    type: Boolean,
-    default: false
   }
 });
 
-const emit = defineEmits(['rename', 'toggleCloudMode', 'logout', 'share']);
+const emit = defineEmits(['rename']);
 
 const isEditing = ref(false);
 const editedName = ref(props.fileName);
