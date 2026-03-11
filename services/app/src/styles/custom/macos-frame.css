@@ -21,6 +21,17 @@
     gap: 8px;
 }
 
+.markdown-body .macos-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    font-weight: 500;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .markdown-body .macos-dot {
     width: 12px;
     height: 12px;

@@ -65,11 +65,14 @@ renderer.code = function(code, language) {
     }
   }
   
+  const languageLabel = lang ? `<span class="macos-title">${lang}</span>` : '';
+  
   return `<div class="macos-window">
     <div class="macos-header">
       <span class="macos-dot macos-dot-red"></span>
       <span class="macos-dot macos-dot-yellow"></span>
       <span class="macos-dot macos-dot-green"></span>
+      ${languageLabel}
     </div>
     <pre><code class="hljs${lang ? ' language-' + lang : ''}">${highlighted}</code></pre>
   </div>`;
