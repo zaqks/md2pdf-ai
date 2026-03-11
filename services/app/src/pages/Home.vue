@@ -30,6 +30,8 @@ const currentFileName = ref('');
 const files = ref([]);
 const isMobileMenuOpen = ref(false);
 const activeTab = ref('editor'); // 'editor' or 'preview'
+const isLoading = ref(false);
+const loadingMessage = ref('');
 
 // Cloud mode
 const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl, getDocuments, deleteDocument } = useCloudStorage();
@@ -98,11 +100,15 @@ function loadFile() {
 async function refreshFileList() {
   if (isCloudMode.value) {
     try {
+      isLoading.value = true;
+      loadingMessage.value = 'Loading documents...';
       cloudDocuments.value = await getDocuments();
       files.value = cloudDocuments.value;
     } catch (error) {
       console.error('Failed to load cloud documents:', error);
       files.value = [];
+    } finally {
+      isLoading.value = false;
     }
   } else {
     files.value = getFileList();
@@ -220,6 +226,8 @@ async function selectFile(fileOrName) {
   if (isCloudMode.value) {
     // Cloud document
     try {
+      isLoading.value = true;
+      loadingMessage.value = 'Loading document...';
       const fullDoc = await getDocument(fileOrName.id);
       currentFileName.value = fullDoc.title;
       markdown.value = fullDoc.content;
@@ -227,6 +235,8 @@ async function selectFile(fileOrName) {
       currentDocumentIsPublic.value = fullDoc.is_public;
     } catch (error) {
       alert('Failed to load document: ' + error.message);
+    } finally {
+      isLoading.value = false;
     }
   } else {
     // Offline file
@@ -244,6 +254,8 @@ async function createNewFile() {
   if (isCloudMode.value) {
     // Cloud document - auto-generate title like offline mode
     try {
+      isLoading.value = true;
+      loadingMessage.value = 'Creating document...';
       const timestamp = new Date().getTime();
       const title = `Document ${timestamp}`;
       
@@ -255,6 +267,8 @@ async function createNewFile() {
       await refreshFileList();
     } catch (error) {
       alert('Failed to create document: ' + error.message);
+    } finally {
+      isLoading.value = false;
     }
   } else {
     // Offline file
@@ -270,6 +284,8 @@ async function handleDeleteFile(fileOrName) {
   if (isCloudMode.value) {
     // Cloud document
     try {
+      isLoading.value = true;
+      loadingMessage.value = 'Deleting document...';
       await deleteDocument(fileOrName.id);
       await refreshFileList();
       
@@ -283,6 +299,8 @@ async function handleDeleteFile(fileOrName) {
       }
     } catch (error) {
       alert('Failed to delete document: ' + error.message);
+    } finally {
+      isLoading.value = false;
     }
   } else {
     // Offline file
@@ -307,11 +325,15 @@ async function handleRenameFile(newName) {
     if (isCloudMode.value) {
       // Cloud document - update via API
       try {
+        isLoading.value = true;
+        loadingMessage.value = 'Renaming document...';
         await updateDocument(currentDocumentId.value, { title: newName });
         currentFileName.value = newName;
         await refreshFileList();
       } catch (error) {
         alert('Failed to rename document: ' + error.message);
+      } finally {
+        isLoading.value = false;
       }
     } else {
       // Offline file
@@ -697,6 +719,14 @@ onBeforeUnmount(() => {
     <AiAssistant :status="aiStatus" :is-processing="aiProcessing" :can-undo="canUndoAi()"
       :hide-on-mobile="isMobileMenuOpen" @submit="handleAiSubmit" @undo="handleAiUndo" />
 
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>{{ loadingMessage }}</p>
+      </div>
+    </div>
+
     <!-- Modals -->
     <div v-if="showMediaBrowser" class="modal-overlay" @click.self="showMediaBrowser = false">
       <MediaBrowser @close="showMediaBrowser = false" @insert="handleMediaInsert" />
@@ -723,6 +753,54 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   z-index: 2000;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  backdrop-filter: blur(4px);
+}
+
+.loading-spinner {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-m);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border);
+}
+
+.loading-spinner p {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-m);
+  margin: 0;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .sidebar {
