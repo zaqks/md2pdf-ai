@@ -652,10 +652,10 @@ onBeforeUnmount(() => {
           <CloudOff v-else :size="20" />
           <span class="button-text">{{ isCloudMode ? 'Offline' : 'Cloud' }}</span>
         </button>
-        <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
+        <!-- <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
           <Share2 :size="20" />
           <span class="button-text">Copy Link</span>
-        </button>
+        </button> -->
         <button 
           v-if="isCloudMode" 
           class="button outline" 
