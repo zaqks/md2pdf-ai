@@ -223,17 +223,29 @@ function handleMediaInsert(markdownText) {
 
 // Select a file
 async function selectFile(fileOrName) {
+  console.log('selectFile called with:', fileOrName);
+  
   if (isCloudMode.value) {
     // Cloud document
+    if (!fileOrName || !fileOrName.id) {
+      console.error('selectFile: Invalid file object', fileOrName);
+      alert('Failed to load document: Invalid document reference');
+      return;
+    }
+    
+    console.log('Fetching document with ID:', fileOrName.id);
+    
     try {
       isLoading.value = true;
       loadingMessage.value = 'Loading document...';
       const fullDoc = await getDocument(fileOrName.id);
+      console.log('Document loaded successfully:', fullDoc);
       currentFileName.value = fullDoc.title;
       markdown.value = fullDoc.content;
       currentDocumentId.value = fullDoc.id;
       currentDocumentIsPublic.value = fullDoc.is_public;
     } catch (error) {
+      console.error('selectFile error:', error);
       alert('Failed to load document: ' + error.message);
     } finally {
       isLoading.value = false;

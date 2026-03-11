@@ -49,10 +49,14 @@ export async function getDocuments() {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch documents');
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.detail || `Failed to fetch documents (${response.status})`;
+      throw new Error(errorMessage);
     }
 
-    return await response.json();
+    const documents = await response.json();
+    console.log('Loaded documents:', documents);
+    return documents;
   } catch (error) {
     console.error('Get documents error:', error);
     throw error;
@@ -68,7 +72,9 @@ export async function getDocument(documentId) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch document');
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.detail || `Failed to fetch document (${response.status})`;
+      throw new Error(errorMessage);
     }
 
     return await response.json();
