@@ -302,14 +302,26 @@ async function handleDeleteFile(fileOrName) {
 }
 
 // Rename file
-function handleRenameFile(newName) {
+async function handleRenameFile(newName) {
   if (newName !== currentFileName.value) {
-    if (renameFile(currentFileName.value, newName)) {
-      currentFileName.value = newName;
-      setCurrentFileName(newName);
-      refreshFileList();
+    if (isCloudMode.value) {
+      // Cloud document - update via API
+      try {
+        await updateDocument(currentDocumentId.value, { title: newName });
+        currentFileName.value = newName;
+        await refreshFileList();
+      } catch (error) {
+        alert('Failed to rename document: ' + error.message);
+      }
     } else {
-      alert('File name already exists or invalid');
+      // Offline file
+      if (renameFile(currentFileName.value, newName)) {
+        currentFileName.value = newName;
+        setCurrentFileName(newName);
+        refreshFileList();
+      } else {
+        alert('File name already exists or invalid');
+      }
     }
   }
 }
