@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2, ChevronDown } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
@@ -36,6 +37,8 @@ const loadingMessage = ref('');
 // Cloud mode
 const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl, getDocuments, deleteDocument } = useCloudStorage();
 const { isAuthenticated, user, logout: logoutUser, getCurrentUser, getOrCreateUser } = useAuth();
+const router = useRouter();
+const route = useRoute();
 const showMediaBrowser = ref(false);
 const currentDocumentId = ref(null);
 const currentDocumentIsPublic = ref(false);
@@ -67,34 +70,6 @@ let isScrollingEditor = false;
 let isScrollingPreview = false;
 let editorScrollTimeout = null;
 let previewScrollTimeout = null;
-
-// Load or initialize file on mount
-function loadFile() {
-  const savedFileName = getCurrentFileName();
-  let fileName, content;
-
-  if (savedFileName) {
-    const fileData = getFile(savedFileName);
-    if (fileData) {
-      fileName = savedFileName;
-      content = fileData.content;
-    } else {
-      // File was deleted or doesn't exist
-      const newFile = initializeNewFile();
-      fileName = newFile.fileName;
-      content = newFile.content;
-    }
-  } else {
-    // No current file, create new one
-    const newFile = initializeNewFile();
-    fileName = newFile.fileName;
-    content = newFile.content;
-  }
-
-  currentFileName.value = fileName;
-  markdown.value = content;
-  refreshFileList();
-}
 
 // Refresh file list
 async function refreshFileList() {
@@ -182,12 +157,9 @@ async function toggleCloudMode() {
     
     // Auto-open first file or create new one
     if (files.value.length > 0) {
-      selectFile(files.value[0].name);
+      router.push(`/docs/local/${encodeURIComponent(files.value[0].name)}`);
     } else {
-      const newFile = initializeNewFile();
-      currentFileName.value = newFile.fileName;
-      markdown.value = newFile.content;
-      refreshFileList();
+      await createNewFile();
     }
   }
 }
@@ -221,73 +193,72 @@ function handleMediaInsert(markdownText) {
   showMediaBrowser.value = false;
 }
 
-// Select a file
+// Load a cloud document by UUID (called when route changes)
+async function loadCloudDoc(uuid) {
+  if (!uuid) return;
+  try {
+    isLoading.value = true;
+    loadingMessage.value = 'Loading document...';
+    const fullDoc = await getDocument(uuid);
+    currentFileName.value = fullDoc.title;
+    markdown.value = fullDoc.content;
+    currentDocumentId.value = fullDoc.id;
+    currentDocumentIsPublic.value = fullDoc.is_public;
+  } catch (error) {
+    console.error('loadCloudDoc error:', error);
+    alert('Failed to load document: ' + error.message);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// Load a local document by filename (called when route changes)
+function loadLocalDoc(uuid) {
+  if (!uuid) return;
+  const fileData = getFile(uuid);
+  if (fileData) {
+    currentFileName.value = uuid;
+    markdown.value = fileData.content;
+    setCurrentFileName(uuid);
+  }
+}
+
+// Select a file — navigate to the right URL; the route watcher does the actual load
 async function selectFile(fileOrName) {
-  console.log('selectFile called with:', fileOrName);
-  
   if (isCloudMode.value) {
-    // Cloud document
     if (!fileOrName || !fileOrName.id) {
       console.error('selectFile: Invalid file object', fileOrName);
       alert('Failed to load document: Invalid document reference');
       return;
     }
-    
-    console.log('Fetching document with ID:', fileOrName.id);
-    
-    try {
-      isLoading.value = true;
-      loadingMessage.value = 'Loading document...';
-      const fullDoc = await getDocument(fileOrName.id);
-      console.log('Document loaded successfully:', fullDoc);
-      currentFileName.value = fullDoc.title;
-      markdown.value = fullDoc.content;
-      currentDocumentId.value = fullDoc.id;
-      currentDocumentIsPublic.value = fullDoc.is_public;
-    } catch (error) {
-      console.error('selectFile error:', error);
-      alert('Failed to load document: ' + error.message);
-    } finally {
-      isLoading.value = false;
-    }
+    router.push(`/docs/cloud/${fileOrName.id}`);
   } else {
-    // Offline file
-    const fileData = getFile(fileOrName);
-    if (fileData) {
-      currentFileName.value = fileOrName;
-      markdown.value = fileData.content;
-      setCurrentFileName(fileOrName);
-    }
+    // fileOrName is a filename string
+    router.push(`/docs/local/${encodeURIComponent(fileOrName)}`);
   }
 }
 
-// Create new file
+// Create new file — then navigate to its URL
 async function createNewFile() {
   if (isCloudMode.value) {
-    // Cloud document - auto-generate title like offline mode
     try {
       isLoading.value = true;
       loadingMessage.value = 'Creating document...';
       const timestamp = new Date().getTime();
       const title = `Document ${timestamp}`;
-      
       const doc = await createDocument(title, '# ' + title + '\n\n');
-      currentFileName.value = doc.title;
-      markdown.value = doc.content;
-      currentDocumentId.value = doc.id;
-      currentDocumentIsPublic.value = doc.is_public;
       await refreshFileList();
+      // Navigate — the route watcher will load the doc
+      router.push(`/docs/cloud/${doc.id}`);
     } catch (error) {
       alert('Failed to create document: ' + error.message);
     } finally {
       isLoading.value = false;
     }
   } else {
-    // Offline file
     const newFile = initializeNewFile();
-    currentFileName.value = newFile.fileName;
-    markdown.value = newFile.content;
     refreshFileList();
+    router.push(`/docs/local/${encodeURIComponent(newFile.fileName)}`);
   }
 }
 
@@ -353,6 +324,8 @@ async function handleRenameFile(newName) {
         currentFileName.value = newName;
         setCurrentFileName(newName);
         refreshFileList();
+        // Update URL to reflect new filename
+        router.replace(`/docs/local/${encodeURIComponent(newName)}`);
       } else {
         alert('File name already exists or invalid');
       }
@@ -567,32 +540,61 @@ function closeTemplatesDropdown(event) {
   }
 }
 
+// React to route changes — this is the single source of truth for which doc is shown
+watch(
+  () => route.params.uuid,
+  async (uuid, oldUuid) => {
+    if (!uuid || uuid === oldUuid) return;
+    if (route.path.startsWith('/docs/cloud/')) {
+      await loadCloudDoc(uuid);
+    } else if (route.path.startsWith('/docs/local/')) {
+      loadLocalDoc(decodeURIComponent(uuid));
+    }
+  }
+);
+
 // Setup on mount
 onMounted(async () => {
+  const uuid = route.params.uuid;
+
   if (isCloudMode.value) {
-    // In cloud mode - load cloud documents
     if (!isAuthenticated.value) {
       await getOrCreateUser();
     }
     await getCurrentUser();
     await refreshFileList();
-    
-    // Auto-open latest document or create new one if no documents exist
-    if (files.value.length > 0) {
-      // Open the latest document (most recently updated)
-      await selectFile(files.value[0]);
+
+    if (uuid && route.path.startsWith('/docs/cloud/')) {
+      // URL already specifies a cloud doc — load it directly
+      await loadCloudDoc(uuid);
+    } else if (files.value.length > 0) {
+      // Navigate to the most recent cloud doc
+      router.replace(`/docs/cloud/${files.value[0].id}`);
     } else {
-      // No documents exist, create a new one automatically
       await createNewFile();
     }
   } else {
-    // In offline mode - load local file
-    loadFile();
+    await refreshFileList();
+
+    if (uuid && route.path.startsWith('/docs/local/')) {
+      // URL already specifies a local doc — load it directly
+      loadLocalDoc(decodeURIComponent(uuid));
+    } else {
+      // Fall back to the last opened file or create a new one
+      const savedFileName = getCurrentFileName();
+      if (savedFileName && getFile(savedFileName)) {
+        router.replace(`/docs/local/${encodeURIComponent(savedFileName)}`);
+      } else if (files.value.length > 0) {
+        router.replace(`/docs/local/${encodeURIComponent(files.value[0].name)}`);
+      } else {
+        const newFile = initializeNewFile();
+        refreshFileList();
+        router.replace(`/docs/local/${encodeURIComponent(newFile.fileName)}`);
+      }
+    }
   }
-  
-  connectAi(); // Connect to AI WebSocket
-  
-  // Add click listener to close dropdown when clicking outside
+
+  connectAi();
   document.addEventListener('click', closeTemplatesDropdown);
 });
 
@@ -652,10 +654,10 @@ onBeforeUnmount(() => {
           <CloudOff v-else :size="20" />
           <span class="button-text">{{ isCloudMode ? 'Offline' : 'Cloud' }}</span>
         </button>
-        <!-- <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
+        <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
           <Share2 :size="20" />
           <span class="button-text">Copy Link</span>
-        </button> -->
+        </button>
         <button 
           v-if="isCloudMode" 
           class="button outline" 

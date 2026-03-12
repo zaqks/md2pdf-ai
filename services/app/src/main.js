@@ -6,7 +6,7 @@ import './styles/style.css'
 import './styles/custom/markdown-preview.css'
 import './styles/custom/macos-frame.css'
 
-
 import App from './App.vue'
+import router from './router.js'
 
-createApp(App).mount('#app')
+createApp(App).use(router).mount('#app')
