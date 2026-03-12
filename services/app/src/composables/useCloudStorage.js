@@ -213,7 +213,7 @@ export function getMediaUrl(mediaId) {
 }
 
 export function getShareUrl(documentId) {
-  return `${window.location.origin}/share/${documentId}`;
+  return `${window.location.origin}/docs/cloud/${documentId}`;
 }
 
 export function useCloudStorage() {

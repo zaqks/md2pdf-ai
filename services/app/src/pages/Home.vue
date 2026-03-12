@@ -42,7 +42,14 @@ const route = useRoute();
 const showMediaBrowser = ref(false);
 const currentDocumentId = ref(null);
 const currentDocumentIsPublic = ref(false);
+const currentDocumentOwnerId = ref(null); // UUID of the doc's owner
 const cloudDocuments = ref([]);
+
+// Computed: true when the current user owns the loaded cloud doc
+const isDocumentOwner = computed(() => {
+  if (!isCloudMode.value || !currentDocumentOwnerId.value || !user.value) return false;
+  return String(currentDocumentOwnerId.value) === String(user.value.id);
+});
 
 // Dropdown state
 const isTemplatesDropdownOpen = ref(false);
@@ -92,8 +99,8 @@ async function refreshFileList() {
 
 // Autosave function
 function autoSave() {
-  if (isCloudMode.value && currentDocumentId.value) {
-    // Debounce cloud saves
+  if (isCloudMode.value && currentDocumentId.value && isDocumentOwner.value) {
+    // Debounce cloud saves — only the owner may write
     if (autosaveInterval) {
       clearTimeout(autosaveInterval);
     }
@@ -153,6 +160,7 @@ async function toggleCloudMode() {
   } else {
     // Switching to offline mode
     currentDocumentId.value = null;
+    currentDocumentOwnerId.value = null;
     await refreshFileList();
     
     // Auto-open first file or create new one
@@ -200,10 +208,26 @@ async function loadCloudDoc(uuid) {
     isLoading.value = true;
     loadingMessage.value = 'Loading document...';
     const fullDoc = await getDocument(uuid);
+
+    // If the current user is NOT the owner, fork a copy instead of showing read-only
+    const currentUserId = user.value?.id;
+    const isOwner = currentUserId && String(fullDoc.user_id) === String(currentUserId);
+
+    if (!isOwner) {
+      loadingMessage.value = 'Creating your copy...';
+      const copyTitle = fullDoc.title + ' (Copy)';
+      const copy = await createDocument(copyTitle, fullDoc.content);
+      await refreshFileList();
+      // Redirect to the copy — this will re-trigger the watcher and load it as owner
+      router.replace(`/docs/cloud/${copy.id}`);
+      return;
+    }
+
     currentFileName.value = fullDoc.title;
     markdown.value = fullDoc.content;
     currentDocumentId.value = fullDoc.id;
     currentDocumentIsPublic.value = fullDoc.is_public;
+    currentDocumentOwnerId.value = fullDoc.user_id;
   } catch (error) {
     console.error('loadCloudDoc error:', error);
     alert('Failed to load document: ' + error.message);
@@ -556,6 +580,15 @@ watch(
 // Setup on mount
 onMounted(async () => {
   const uuid = route.params.uuid;
+  const isCloudUrl = route.path.startsWith('/docs/cloud/');
+
+  // If the URL is a cloud URL but cloud mode is off, activate it first
+  if (isCloudUrl && !isCloudMode.value) {
+    if (!isAuthenticated.value) {
+      await getOrCreateUser();
+    }
+    setCloudMode(true);
+  }
 
   if (isCloudMode.value) {
     if (!isAuthenticated.value) {
@@ -564,7 +597,7 @@ onMounted(async () => {
     await getCurrentUser();
     await refreshFileList();
 
-    if (uuid && route.path.startsWith('/docs/cloud/')) {
+    if (uuid && isCloudUrl) {
       // URL already specifies a cloud doc — load it directly
       await loadCloudDoc(uuid);
     } else if (files.value.length > 0) {
