@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2, ChevronDown } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2, ChevronDown, ChevronsLeft, ChevronsRight } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -45,6 +45,7 @@ const currentDocumentIsPublic = ref(false);
 const currentDocumentOwnerId = ref(null); // UUID of the doc's owner
 const cloudDocuments = ref([]);
 let forkSourceDocumentId = null;
+const isDocsCollapsed = ref(false);
 
 // Computed: true when the current user owns the loaded cloud doc
 const isDocumentOwner = computed(() => {
@@ -217,6 +218,10 @@ function openMediaBrowser() {
   } else {
     showMediaBrowser.value = true;
   }
+}
+
+function toggleDocsCollapse() {
+  isDocsCollapsed.value = !isDocsCollapsed.value;
 }
 
 function handleMediaInsert(markdownText) {
@@ -696,7 +701,15 @@ onBeforeUnmount(() => {
         <span class="logo-text">md2pdf-AI</span>
       </div>
 
+      <div class="docs-toggle">
+        <button class="button outline" @click="toggleDocsCollapse" title="Toggle docs list">
+          <component :is="isDocsCollapsed ? ChevronsRight : ChevronsLeft" :size="20" />
+          <span class="button-text">{{ isDocsCollapsed ? 'Show Docs' : 'Hide Docs' }}</span>
+        </button>
+      </div>
+
       <FileBrowser 
+        v-show="!isDocsCollapsed"
         :files="files" 
         :current-file-name="currentFileName"
         :is-cloud-mode="isCloudMode"
@@ -722,11 +735,10 @@ onBeforeUnmount(() => {
           <span class="button-text">Copy Link</span>
         </button>
         <button 
-          v-if="isCloudMode" 
           class="button outline" 
-          :class="{ 'disabled': !isCloudModeAvailable }" 
+          :class="{ 'disabled': isCloudMode && !isCloudModeAvailable }" 
           @click="openMediaBrowser" 
-          :disabled="!isCloudModeAvailable"
+          :disabled="isCloudMode && !isCloudModeAvailable"
           title="Media Library"
         >
           <ImageIcon :size="20" />
@@ -895,6 +907,14 @@ onBeforeUnmount(() => {
   z-index: 100;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+.docs-toggle {
+  padding: 0 var(--spacing-s) var(--spacing-s) var(--spacing-s);
+}
+
+.docs-toggle .button {
+  justify-content: center;
 }
 
 .sidebar:hover {
