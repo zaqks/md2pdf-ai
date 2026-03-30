@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2, ChevronDown, ChevronsLeft, ChevronsRight } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
@@ -18,6 +18,7 @@ import {
   setCurrentFileName,
   getFileList
 } from '../utils/storage.js';
+import { getLocalMediaList, getLocalMediaUrl } from '../utils/localMedia.js';
 import { useAiAssistant } from '../composables/useAiAssistant.js';
 import { useAuth } from '../composables/useAuth.js';
 import { useCloudStorage } from '../composables/useCloudStorage.js';
@@ -25,6 +26,7 @@ import { useCloudStorage } from '../composables/useCloudStorage.js';
 const markdown = ref('# Hello World !');
 const isDragging = ref(false);
 const editorContainerRef = ref(null);
+const mainContainerRef = ref(null);
 const previewRef = ref(null);
 const editorRef = ref(null);
 const currentFileName = ref('');
@@ -229,6 +231,26 @@ function handleMediaInsert(markdownText) {
   showMediaBrowser.value = false;
 }
 
+function normalizeLocalMediaReferences(text) {
+  let normalized = text;
+  const mediaItems = getLocalMediaList();
+  if (!Array.isArray(mediaItems) || mediaItems.length === 0) {
+    return normalized;
+  }
+
+  // Replace embedded data URLs with local-media references when we can match by dataUrl
+  const dataUrlRegex = /!\[(.*?)\]\((data:[^)]+)\)/g;
+  normalized = normalized.replace(dataUrlRegex, (match, alt, url) => {
+    const found = mediaItems.find((item) => item.dataUrl === url);
+    if (found) {
+      return `![${alt}](local-media:${found.id})`;
+    }
+    return match;
+  });
+
+  return normalized;
+}
+
 // Load a cloud document by UUID (called when route changes)
 async function loadCloudDoc(uuid) {
   if (!uuid) return;
@@ -277,7 +299,11 @@ function loadLocalDoc(uuid) {
   const fileData = getFile(uuid);
   if (fileData) {
     currentFileName.value = uuid;
-    markdown.value = fileData.content;
+    const normalizedContent = normalizeLocalMediaReferences(fileData.content);
+    markdown.value = normalizedContent;
+    if (normalizedContent !== fileData.content) {
+      saveFile(uuid, normalizedContent);
+    }
     setCurrentFileName(uuid);
   }
 }
@@ -569,7 +595,7 @@ function startDrag(event) {
 function onDrag(event) {
   if (!isDragging.value || !editorContainerRef.value) return;
 
-  const container = event.currentTarget;
+  const container = mainContainerRef.value || event.currentTarget;
   const containerRect = container.getBoundingClientRect();
   const newWidth = event.clientX - containerRect.left;
   const minWidth = 200;
@@ -582,6 +608,16 @@ function onDrag(event) {
 
 function stopDrag() {
   isDragging.value = false;
+}
+
+function setDefaultSplit() {
+  if (!mainContainerRef.value || !editorContainerRef.value) return;
+  const containerWidth = mainContainerRef.value.clientWidth || 0;
+  const desired = containerWidth > 0 ? containerWidth / 2 : 400;
+  const minWidth = 200;
+  const maxWidth = Math.max(minWidth, containerWidth - 200);
+  const width = Math.min(Math.max(desired, minWidth), maxWidth);
+  editorContainerRef.value.style.flex = `0 0 ${width}px`;
 }
 
 // Toggle templates dropdown
@@ -616,6 +652,9 @@ watch(
 onMounted(async () => {
   const uuid = route.params.uuid;
   const isCloudUrl = route.path.startsWith('/docs/cloud/');
+
+  await nextTick();
+  setDefaultSplit();
 
   // If the URL is a cloud URL but cloud mode is off, activate it first
   if (isCloudUrl && !isCloudMode.value) {

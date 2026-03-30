@@ -141,7 +141,7 @@ function copyUrl(media) {
 }
 
 function insertMarkdown(media) {
-  const url = props.isCloudMode ? getMediaUrl(media.id) : getLocalMediaUrl(media.id);
+  const url = props.isCloudMode ? getMediaUrl(media.id) : `local-media:${media.id}`;
   const markdown = `![${media.original_filename}](${url})`;
   emit('insert', markdown);
 }

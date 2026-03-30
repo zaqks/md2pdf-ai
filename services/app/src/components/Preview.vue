@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch, onMounted, nextTick, computed } from 'vue';
+import { getLocalMediaUrl } from '../utils/localMedia.js';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 
@@ -42,6 +43,23 @@ const originalHeadingRenderer = renderer.heading.bind(renderer);
 renderer.heading = function(text, level, raw) {
   const slug = raw.toLowerCase().trim().replace(/\s+/g, '-');
   return `<h${level} id="${slug}">${text}</h${level}>`;
+};
+
+// Custom image renderer: resolve local-media references to stored data URLs
+renderer.image = function(href, title, text) {
+  let resolvedHref = href || '';
+
+  if (href && href.startsWith('local-media:')) {
+    const mediaId = href.replace('local-media:', '');
+    const url = getLocalMediaUrl(mediaId);
+    if (url) {
+      resolvedHref = url;
+    }
+  }
+
+  const titleAttr = title ? ` title="${title}"` : '';
+  const alt = text || '';
+  return `<img src="${resolvedHref}" alt="${alt}"${titleAttr} />`;
 };
 
 // Custom code block renderer with HTML macOS window frame
