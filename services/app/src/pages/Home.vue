@@ -44,6 +44,7 @@ const currentDocumentId = ref(null);
 const currentDocumentIsPublic = ref(false);
 const currentDocumentOwnerId = ref(null); // UUID of the doc's owner
 const cloudDocuments = ref([]);
+let forkSourceDocumentId = null;
 
 // Computed: true when the current user owns the loaded cloud doc
 const isDocumentOwner = computed(() => {
@@ -79,12 +80,14 @@ let editorScrollTimeout = null;
 let previewScrollTimeout = null;
 
 // Refresh file list
-async function refreshFileList() {
+async function refreshFileList(options = {}) {
+  const { force = false } = options;
+
   if (isCloudMode.value) {
     try {
       isLoading.value = true;
       loadingMessage.value = 'Loading documents...';
-      cloudDocuments.value = await getDocuments();
+      cloudDocuments.value = await getDocuments({ forceRefresh: force });
       files.value = cloudDocuments.value;
     } catch (error) {
       console.error('Failed to load cloud documents:', error);
@@ -126,6 +129,22 @@ watch(markdown, () => {
 });
 
 // Cloud mode handlers
+async function ensureCloudUser() {
+  if (!isAuthenticated.value) {
+    const result = await getOrCreateUser();
+    if (!result.success) {
+      throw new Error(result.error || 'Unable to authenticate');
+    }
+  }
+
+  if (!user.value) {
+    const me = await getCurrentUser();
+    if (!me.success) {
+      throw new Error(me.error || 'Unable to fetch current user');
+    }
+  }
+}
+
 async function toggleCloudMode() {
   // Prevent toggling if AI is not connected
   if (!isCloudModeAvailable.value) {
@@ -149,7 +168,7 @@ async function toggleCloudMode() {
   if (newMode) {
     // Switching to cloud mode
     currentDocumentId.value = null;
-    await refreshFileList();
+    await refreshFileList({ force: true });
     
     // Auto-open first document or create new one
     if (files.value.length > 0) {
@@ -207,6 +226,7 @@ async function loadCloudDoc(uuid) {
   try {
     isLoading.value = true;
     loadingMessage.value = 'Loading document...';
+    await ensureCloudUser();
     const fullDoc = await getDocument(uuid);
 
     // If the current user is NOT the owner, fork a copy instead of showing read-only
@@ -214,12 +234,17 @@ async function loadCloudDoc(uuid) {
     const isOwner = currentUserId && String(fullDoc.user_id) === String(currentUserId);
 
     if (!isOwner) {
+      if (forkSourceDocumentId === uuid) {
+        return;
+      }
+      forkSourceDocumentId = uuid;
       loadingMessage.value = 'Creating your copy...';
       const copyTitle = fullDoc.title + ' (Copy)';
       const copy = await createDocument(copyTitle, fullDoc.content);
-      await refreshFileList();
+      await refreshFileList({ force: true });
       // Redirect to the copy — this will re-trigger the watcher and load it as owner
       router.replace(`/docs/cloud/${copy.id}`);
+      forkSourceDocumentId = null;
       return;
     }
 
@@ -233,6 +258,7 @@ async function loadCloudDoc(uuid) {
     alert('Failed to load document: ' + error.message);
   } finally {
     isLoading.value = false;
+    forkSourceDocumentId = null;
   }
 }
 
@@ -271,7 +297,7 @@ async function createNewFile() {
       const timestamp = new Date().getTime();
       const title = `Document ${timestamp}`;
       const doc = await createDocument(title, '# ' + title + '\n\n');
-      await refreshFileList();
+      await refreshFileList({ force: true });
       // Navigate — the route watcher will load the doc
       router.push(`/docs/cloud/${doc.id}`);
     } catch (error) {
@@ -294,7 +320,7 @@ async function handleDeleteFile(fileOrName) {
       isLoading.value = true;
       loadingMessage.value = 'Deleting document...';
       await deleteDocument(fileOrName.id);
-      await refreshFileList();
+      await refreshFileList({ force: true });
       
       // If deleted document was active, clear or load another
       if (currentDocumentId.value === fileOrName.id) {
@@ -336,7 +362,7 @@ async function handleRenameFile(newName) {
         loadingMessage.value = 'Renaming document...';
         await updateDocument(currentDocumentId.value, { title: newName });
         currentFileName.value = newName;
-        await refreshFileList();
+        await refreshFileList({ force: true });
       } catch (error) {
         alert('Failed to rename document: ' + error.message);
       } finally {
