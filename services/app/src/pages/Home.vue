@@ -208,11 +208,15 @@ async function copyShareLink() {
 
 
 function openMediaBrowser() {
-  if (!isAuthenticated.value) {
-    toggleCloudMode();
-    return;
+  if (isCloudMode.value && !isAuthenticated.value) {
+    ensureCloudUser().then(() => {
+      showMediaBrowser.value = true;
+    }).catch((error) => {
+      alert('Unable to open media library: ' + error.message);
+    });
+  } else {
+    showMediaBrowser.value = true;
   }
-  showMediaBrowser.value = true;
 }
 
 function handleMediaInsert(markdownText) {
@@ -802,7 +806,7 @@ onBeforeUnmount(() => {
 
     <!-- Modals -->
     <div v-if="showMediaBrowser" class="modal-overlay" @click.self="showMediaBrowser = false">
-      <MediaBrowser @close="showMediaBrowser = false" @insert="handleMediaInsert" />
+      <MediaBrowser :is-cloud-mode="isCloudMode" @close="showMediaBrowser = false" @insert="handleMediaInsert" />
     </div>
   </div>
 </template>

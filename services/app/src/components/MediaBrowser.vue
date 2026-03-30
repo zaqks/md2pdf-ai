@@ -68,6 +68,14 @@
 import { ref, onMounted } from 'vue';
 import { X, Upload, Copy, Code, Trash2 } from 'lucide-vue-next';
 import { useCloudStorage } from '../composables/useCloudStorage.js';
+import { addLocalMedia, getLocalMediaList, deleteLocalMedia, getLocalMediaUrl } from '../utils/localMedia.js';
+
+const props = defineProps({
+  isCloudMode: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 const emit = defineEmits(['close', 'insert']);
 
@@ -84,12 +92,19 @@ async function loadMedia() {
   error.value = '';
   
   try {
-    const mediaItems = await getMediaList();
-    // Add URL to each media item for preview
-    mediaList.value = mediaItems.map(media => ({
-      ...media,
-      url: getMediaUrl(media.id)
-    }));
+    if (props.isCloudMode) {
+      const mediaItems = await getMediaList();
+      mediaList.value = mediaItems.map(media => ({
+        ...media,
+        url: getMediaUrl(media.id)
+      }));
+    } else {
+      const mediaItems = getLocalMediaList();
+      mediaList.value = mediaItems.map(media => ({
+        ...media,
+        url: getLocalMediaUrl(media.id)
+      }));
+    }
   } catch (err) {
     error.value = 'Failed to load media: ' + err.message;
   } finally {
@@ -105,8 +120,11 @@ async function handleFileSelect(event) {
   error.value = '';
   
   try {
-    // Upload all files in parallel
-    await Promise.all(files.map(file => uploadMedia(file)));
+    if (props.isCloudMode) {
+      await Promise.all(files.map(file => uploadMedia(file)));
+    } else {
+      await Promise.all(files.map(file => addLocalMedia(file)));
+    }
     await loadMedia();
   } catch (err) {
     error.value = 'Failed to upload: ' + err.message;
@@ -117,13 +135,13 @@ async function handleFileSelect(event) {
 }
 
 function copyUrl(media) {
-  const url = getMediaUrl(media.id);
+  const url = props.isCloudMode ? getMediaUrl(media.id) : getLocalMediaUrl(media.id);
   navigator.clipboard.writeText(url);
   alert('URL copied to clipboard!');
 }
 
 function insertMarkdown(media) {
-  const url = getMediaUrl(media.id);
+  const url = props.isCloudMode ? getMediaUrl(media.id) : getLocalMediaUrl(media.id);
   const markdown = `![${media.original_filename}](${url})`;
   emit('insert', markdown);
 }
@@ -134,7 +152,11 @@ async function deleteMedia(media) {
   }
   
   try {
-    await deleteMediaFile(media.id);
+    if (props.isCloudMode) {
+      await deleteMediaFile(media.id);
+    } else {
+      deleteLocalMedia(media.id);
+    }
     await loadMedia();
   } catch (err) {
     alert('Failed to delete media: ' + err.message);

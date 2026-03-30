@@ -35,6 +35,7 @@ md2pdf-ai/
 │   │   │   │       └── markdown-preview.css # Markdown preview styles
 │   │   │   ├── utils/
 │   │   │   │   └── storage.js        # LocalStorage utility
+│   │   │   │   └── localMedia.js     # Media LocalStorage utility
 │   │   │   ├── App.vue
 │   │   │   └── main.js
 │   │   └── Dockerfile
