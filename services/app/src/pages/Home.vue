@@ -652,16 +652,35 @@ watch(
 onMounted(async () => {
   const uuid = route.params.uuid;
   const isCloudUrl = route.path.startsWith('/docs/cloud/');
+  const isLocalUrl = route.path.startsWith('/docs/local/');
 
   await nextTick();
   setDefaultSplit();
 
-  // If the URL is a cloud URL but cloud mode is off, activate it first
+  // Handle URL/mode mismatch - respect persisted cloud mode, navigate to correct URL
   if (isCloudUrl && !isCloudMode.value) {
+    // Cloud URL but local mode persisted - activate cloud mode for this cloud link
     if (!isAuthenticated.value) {
       await getOrCreateUser();
     }
     setCloudMode(true);
+  } else if (isLocalUrl && isCloudMode.value) {
+    // Local URL but cloud mode persisted - redirect to cloud instead
+    // Don't change the persisted mode, just navigate away from this local URL
+    currentDocumentId.value = null;
+    if (!isAuthenticated.value) {
+      await getOrCreateUser();
+    }
+    await getCurrentUser();
+    await refreshFileList();
+    
+    if (files.value.length > 0) {
+      router.replace(`/docs/cloud/${files.value[0].id}`);
+      return;
+    } else {
+      await createNewFile();
+      return;
+    }
   }
 
   if (isCloudMode.value) {
