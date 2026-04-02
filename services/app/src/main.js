@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import 'github-markdown-css/github-markdown-light.css'
 import 'highlight.js/styles/github-dark.css'
+import 'katex/dist/katex.min.css'
 
 import './styles/style.css'
 import './styles/custom/markdown-preview.css'

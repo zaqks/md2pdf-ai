@@ -3,6 +3,7 @@ import { ref, watch, onMounted, nextTick, computed } from 'vue';
 import { getLocalMediaUrl } from '../utils/localMedia.js';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+import markedKatex from 'marked-katex-extension';
 
 const props = defineProps({
   markdown: {
@@ -95,6 +96,12 @@ renderer.code = function(code, language) {
     <pre><code class="hljs${lang ? ' language-' + lang : ''}">${highlighted}</code></pre>
   </div>`;
 };
+
+// Configure KaTeX extension for LaTeX math rendering
+marked.use(markedKatex({
+  throwOnError: false,
+  output: 'html'
+}));
 
 marked.setOptions({
   renderer: renderer,
