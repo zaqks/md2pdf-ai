@@ -1068,11 +1068,14 @@ onBeforeUnmount(() => {
   width: 100%;
   white-space: nowrap;
   justify-content: center;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
 }
 
 .sidebar:hover .button {
   justify-content: flex-start;
   gap: var(--spacing-m);
+  aspect-ratio: auto;
 }
 
 .button svg {
