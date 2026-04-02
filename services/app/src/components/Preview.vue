@@ -270,7 +270,6 @@ defineExpose({
   }
 
   .markdown-body {
-    overflow: visible !important;
     padding: 20px !important;
     background-color: white !important;
     color: black !important;
@@ -278,9 +277,13 @@ defineExpose({
     height: auto !important;
   }
 
-  .markdown-body,
-  .markdown-body * {
-    overflow: visible !important;
+  /* Ensure KaTeX uses correct sizing in print */
+  .markdown-body :deep(.katex) {
+    font-size: 1.21em;
+  }
+
+  .markdown-body :deep(.katex-display .katex) {
+    font-size: 1.21em;
   }
 
   .markdown-body table {
