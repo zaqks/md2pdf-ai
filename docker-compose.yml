@@ -32,7 +32,7 @@ services:
       context: ./services/api
       dockerfile: Dockerfile
     ports:
-      - 8001:8000
+      - 8001:7860
     env_file:
       - .env
     volumes:

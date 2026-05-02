@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose only the port you actually use (adjust if needed)
-EXPOSE 8000
+EXPOSE 7860
 
 # Run the app
 CMD ["python3", "main.py"]     
