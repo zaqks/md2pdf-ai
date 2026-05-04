@@ -80,13 +80,14 @@ function removeFromDocListCache(documentId) {
   saveDocsCache(docs.filter((doc) => String(doc.id) !== String(documentId)));
 }
 
-// Cloud mode state
-const isCloudMode = ref(localStorage.getItem('cloud_mode') === 'true');
+// Cloud mode state - DISABLED (temporarily disabled to prevent cloud mode switching)
+const isCloudMode = ref(false);
 
-// Set cloud mode
+// Set cloud mode - DISABLED (cloud mode is disabled)
 export function setCloudMode(enabled) {
-  isCloudMode.value = enabled;
-  localStorage.setItem('cloud_mode', enabled.toString());
+  // Cloud mode is temporarily disabled - this function is now a no-op
+  isCloudMode.value = false;
+  // localStorage.setItem('cloud_mode', enabled.toString()); // Disabled
 }
 
 // Get cloud mode

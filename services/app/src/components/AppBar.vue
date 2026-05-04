@@ -1,23 +1,11 @@
 <script setup>
 import { ref, watch } from 'vue';
-import { Check, X, Pencil, User } from 'lucide-vue-next';
+import { Check, X, Pencil } from 'lucide-vue-next';
 
 const props = defineProps({
   fileName: {
     type: String,
     required: true
-  },
-  isCloudMode: {
-    type: Boolean,
-    default: false
-  },
-  isAuthenticated: {
-    type: Boolean,
-    default: false
-  },
-  user: {
-    type: Object,
-    default: null
   }
 });
 
@@ -60,10 +48,6 @@ function handleKeydown(event) {
 <template>
   <div class="app-bar">
     <div class="left-section">
-      <div v-if="isCloudMode && isAuthenticated" class="user-info">
-        <User :size="16" />
-        <span class="username">{{ user?.username }}</span>
-      </div>
     </div>
 
     <div class="file-name-container">

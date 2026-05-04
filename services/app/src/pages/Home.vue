@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, Cloud, CloudOff, Share2, ChevronDown, ChevronsLeft, ChevronsRight } from 'lucide-vue-next';
+import { ListPlus, Table2, ImagePlus, FileUp, FileDown, Menu, Image as ImageIcon, ChevronDown, ChevronsLeft, ChevronsRight } from 'lucide-vue-next';
 import Editor from '../components/Editor.vue';
 import Preview from '../components/Preview.vue';
 import AiAssistant from '../components/AiAssistant.vue';
@@ -148,50 +148,11 @@ async function ensureCloudUser() {
   }
 }
 
+// DISABLED: Cloud mode is temporarily disabled
 async function toggleCloudMode() {
-  // Prevent toggling if AI is not connected
-  if (!isCloudModeAvailable.value) {
-    alert('Cloud mode requires AI Assistant connection. Please wait for connection...');
-    return;
-  }
-  
-  const newMode = !isCloudMode.value;
-
-  if (newMode && !isAuthenticated.value) {
-    // Auto-create anonymous user
-    const result = await getOrCreateUser();
-    if (!result.success) {
-      alert('Failed to enable cloud mode: ' + result.error);
-      return;
-    }
-  }
-
-  setCloudMode(newMode);
-
-  if (newMode) {
-    // Switching to cloud mode
-    currentDocumentId.value = null;
-    await refreshFileList({ force: true });
-    
-    // Auto-open first document or create new one
-    if (files.value.length > 0) {
-      await selectFile(files.value[0]);
-    } else {
-      await createNewFile();
-    }
-  } else {
-    // Switching to offline mode
-    currentDocumentId.value = null;
-    currentDocumentOwnerId.value = null;
-    await refreshFileList();
-    
-    // Auto-open first file or create new one
-    if (files.value.length > 0) {
-      router.push(`/docs/local/${encodeURIComponent(files.value[0].name)}`);
-    } else {
-      await createNewFile();
-    }
-  }
+  // This function is disabled - cloud mode cannot be toggled
+  console.warn('Cloud mode is temporarily disabled');
+  return;
 }
 
 async function copyShareLink() {
@@ -778,26 +739,10 @@ onBeforeUnmount(() => {
 
       <nav class="menu">
         <button 
-          class="button" 
-          :class="[isCloudMode ? 'filled' : 'outline', { 'disabled': !isCloudModeAvailable }]" 
-          @click="toggleCloudMode" 
-          :disabled="!isCloudModeAvailable"
-          :title="!isCloudModeAvailable ? 'Waiting for AI connection...' : (isCloudMode ? 'Switch to Offline Mode' : 'Switch to Cloud Mode')"
-        >
-          <Cloud v-if="!isCloudMode" :size="20" />
-          <CloudOff v-else :size="20" />
-          <span class="button-text">{{ isCloudMode ? 'Offline' : 'Cloud' }}</span>
-        </button>
-        <button v-if="isCloudMode && currentDocumentId" class="button outline" @click="copyShareLink" title="Copy Share Link">
-          <Share2 :size="20" />
-          <span class="button-text">Copy Link</span>
-        </button>
-        <button 
           class="button outline" 
-          :class="{ 'disabled': isCloudMode && !isCloudModeAvailable }" 
           @click="openMediaBrowser" 
-          :disabled="isCloudMode && !isCloudModeAvailable"
           title="Media Library"
+        >
         >
           <ImageIcon :size="20" />
           <span class="button-text">Media</span>
@@ -838,9 +783,6 @@ onBeforeUnmount(() => {
     <div class="content-area">
       <AppBar 
         :file-name="currentFileName" 
-        :is-cloud-mode="isCloudMode"
-        :is-authenticated="isAuthenticated"
-        :user="user"
         @rename="handleRenameFile"
       />      <!-- Mobile Tab Switcher -->
       <div class="mobile-tabs">
