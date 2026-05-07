@@ -35,6 +35,7 @@ const isMobileMenuOpen = ref(false);
 const activeTab = ref('editor'); // 'editor' or 'preview'
 const isLoading = ref(false);
 const loadingMessage = ref('');
+const DEFAULT_PAGE_TITLE = 'MD2PDF-AI - Markdown to PDF';
 
 // Cloud mode
 const { isCloudMode, setCloudMode, createDocument, getDocument, updateDocument, getShareUrl, getDocuments, deleteDocument } = useCloudStorage();
@@ -126,10 +127,19 @@ function autoSave() {
   }
 }
 
+function updatePageTitle(fileName) {
+  const title = (fileName || '').trim();
+  document.title = title ? title : DEFAULT_PAGE_TITLE;
+}
+
 // Watch markdown changes and trigger autosave
 watch(markdown, () => {
   autoSave();
 });
+
+watch(currentFileName, (fileName) => {
+  updatePageTitle(fileName);
+}, { immediate: true });
 
 // Cloud mode handlers
 async function ensureCloudUser() {
@@ -458,6 +468,7 @@ function uploadFile(event) {
 }
 
 function transformToPDF() {
+  updatePageTitle(currentFileName.value);
   window.print();
 }
 
